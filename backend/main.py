@@ -2,7 +2,6 @@ from datetime import datetime, timezone
 
 from fastapi import FastAPI, HTTPException
 
-
 app = FastAPI(
     title="Next.js + FastAPI Services Demo",
     description="Minimal backend service mounted under /svc/api on Vercel Services",

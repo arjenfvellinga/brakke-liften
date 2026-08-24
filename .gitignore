@@ -1,0 +1,11 @@
+.vercel
+.env*
+
+# frontend
+node_modules/
+.next/
+
+# backend
+__pycache__/
+*.py[cod]
+.venv/

@@ -23,7 +23,7 @@ export default function Home() {
       <header>
         <nav>
           <a href="/" className="logo">
-            Next.js + FastAPI
+            Brakke Liften
           </a>
           <div className="nav-links">
             <a href={`${BACKEND}/status`}>Status</a>

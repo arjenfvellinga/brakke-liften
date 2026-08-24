@@ -23,5 +23,9 @@
         "service": "frontend"
       }
     }
-  ]
+  ],
+  "crons": [{
+    "path": "/svc/api/cron",
+    "schedule": "0 17 * * *"
+  }]
 }

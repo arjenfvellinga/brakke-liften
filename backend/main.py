@@ -49,3 +49,8 @@ def get_item(item_id: int):
         raise HTTPException(status_code=404, detail="Item not found")
 
     return {"item": item}
+
+
+@app.get("/svc/api/cron")
+def cron():
+    return { "ok": "true" }

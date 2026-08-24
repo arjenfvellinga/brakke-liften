@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import FastAPI, HTTPException
 
@@ -30,7 +30,7 @@ def get_status():
         "service": "backend",
         "framework": "fastapi",
         "mountedAt": "/svc/api",
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
     }
 
 

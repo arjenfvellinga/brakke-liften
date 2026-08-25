@@ -46,3 +46,21 @@ Open `http://localhost:3000` and try:
 
 - `/api/hello` (Next.js API route)
 - `/svc/api/status` (FastAPI backend route)
+
+
+## Note
+```bash
+uv add --dev alembic
+
+uv run alembic revision --autogenerate -m "create lifts table"   # writes alembic/versions/<hash>_*.py
+uv run alembic upgrade head                                      # apply
+uv run alembic downgrade -1                                      # undo one
+uv run alembic current                                           # what's applied
+
+cd backend && uv run alembic upgrade head && cd ..
+```
+
+```bash
+brew services start postgresql@18
+createdb brakke_liften
+```

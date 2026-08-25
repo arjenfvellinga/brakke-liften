@@ -1,18 +1,19 @@
 from datetime import UTC, datetime
+from typing import Annotated
 
-from fastapi import FastAPI, HTTPException
+from db import get_session
+from fastapi import Depends, FastAPI, HTTPException
+from models import Item
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+SessionDep = Annotated[AsyncSession, Depends(get_session)]
 
 app = FastAPI(
     title="Next.js + FastAPI Services Demo",
     description="Minimal backend service mounted under /svc/api on Vercel Services",
     version="1.0.0",
 )
-
-SAMPLE_ITEMS = [
-    {"id": 1, "name": "Service Item 1", "value": 100},
-    {"id": 2, "name": "Service Item 2", "value": 200},
-    {"id": 3, "name": "Service Item 3", "value": 300},
-]
 
 
 @app.get("/svc/api")
@@ -35,20 +36,22 @@ def get_status():
 
 
 @app.get("/svc/api/items")
-def get_items():
+async def get_items(session: SessionDep):
+    items = (await session.scalars(select(Item).order_by(Item.id))).all()
+
     return {
-        "items": SAMPLE_ITEMS,
-        "count": len(SAMPLE_ITEMS),
+        "items": [item.as_dict() for item in items],
+        "count": len(items),
     }
 
 
 @app.get("/svc/api/items/{item_id}")
-def get_item(item_id: int):
-    item = next((value for value in SAMPLE_ITEMS if value["id"] == item_id), None)
+async def get_item(item_id: int, session: SessionDep):
+    item = await session.get(Item, item_id)
     if item is None:
         raise HTTPException(status_code=404, detail="Item not found")
 
-    return {"item": item}
+    return {"item": item.as_dict()}
 
 
 @app.get("/svc/api/cron")

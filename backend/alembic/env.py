@@ -1,16 +1,12 @@
 import asyncio
-import os
 from logging.config import fileConfig
-from pathlib import Path
 
 from alembic import context
-from dotenv import load_dotenv
+from db import get_database_url
+from models import Base
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
-
-# TODO
-# from models import Base   # or wherever your DeclarativeBase lives
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -21,34 +17,11 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# .env.local lives at the monorepo root, two levels up from this file.
-# Real environment variables win, so deployments need no file at all.
-load_dotenv(Path(__file__).resolve().parents[2] / ".env.local", override=False)
-
-database_url = os.environ.get("DATABASE_URL")
-if not database_url:
-    raise RuntimeError(
-        "DATABASE_URL is not set. Add it to .env.local at the repo root "
-        "(or export it) before running alembic."
-    )
-
-# This env.py drives an async engine, so the URL needs an async driver. Hosted
-# Postgres hands out postgres:// / postgresql:// URLs; point those at psycopg3.
-for scheme in ("postgresql://", "postgres://"):
-    if database_url.startswith(scheme):
-        database_url = "postgresql+psycopg://" + database_url[len(scheme) :]
-        break
-
 # % is ConfigParser's interpolation character, so escape it before storing.
-config.set_main_option("sqlalchemy.url", database_url.replace("%", "%%"))
+config.set_main_option("sqlalchemy.url", get_database_url().replace("%", "%%"))
 
-# add your model's MetaData object here
-# for 'autogenerate' support
-# from myapp import mymodel
-# target_metadata = mymodel.Base.metadata
-target_metadata = None
-# TODO
-# target_metadata = Base.metadata
+# Model metadata for 'autogenerate' support.
+target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:

@@ -10,9 +10,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
 
 app = FastAPI(
-    title="Next.js + FastAPI Services Demo",
+    title="Brakke Liften",
     description="Minimal backend service mounted under /svc/api on Vercel Services",
     version="1.0.0",
+    docs_url="/svc/api/docs",
+    redoc_url="/svc/api/redoc",
+    openapi_url="/svc/api/openapi.json",
 )
 
 

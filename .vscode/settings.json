@@ -1,4 +1,8 @@
 {
   "python.defaultInterpreterPath": "${workspaceFolder}/backend/.venv/bin/python",
-  "python.analysis.extraPaths": ["${workspaceFolder}/backend"]
+  "python.analysis.extraPaths": ["${workspaceFolder}/backend"],
+  "[python]": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "charliermarsh.ruff"
+  }
 }

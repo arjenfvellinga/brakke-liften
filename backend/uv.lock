@@ -249,6 +249,7 @@ name = "next-fastapi-monorepo-backend"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "alembic" },
     { name = "fastapi" },
     { name = "psycopg", extra = ["binary"] },
     { name = "sqlalchemy", extra = ["asyncio"] },
@@ -257,12 +258,12 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
-    { name = "alembic" },
     { name = "python-dotenv" },
 ]
 
 [package.metadata]
 requires-dist = [
+    { name = "alembic", specifier = ">=1.19.1" },
     { name = "fastapi", specifier = ">=0.124.2" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.3.4" },
     { name = "sqlalchemy", extras = ["asyncio"], specifier = ">=2.0.52" },
@@ -270,10 +271,7 @@ requires-dist = [
 ]
 
 [package.metadata.requires-dev]
-dev = [
-    { name = "alembic", specifier = ">=1.19.1" },
-    { name = "python-dotenv", specifier = ">=1.2.1" },
-]
+dev = [{ name = "python-dotenv", specifier = ">=1.2.1" }]
 
 [[package]]
 name = "psycopg"

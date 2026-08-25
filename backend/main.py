@@ -5,7 +5,7 @@ from fastapi import FastAPI, HTTPException
 app = FastAPI(
     title="Next.js + FastAPI Services Demo",
     description="Minimal backend service mounted under /svc/api on Vercel Services",
-    version="1.0.0"
+    version="1.0.0",
 )
 
 SAMPLE_ITEMS = [
@@ -53,4 +53,4 @@ def get_item(item_id: int):
 
 @app.get("/svc/api/cron")
 def cron():
-    return { "ok": "true" }
+    return {"ok": "true"}

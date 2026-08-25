@@ -11,7 +11,7 @@ class Base(DeclarativeBase):
 
 
 class Item(Base):
-    __tablename__ = "items"
+    __tablename__ = "lifts"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(255))

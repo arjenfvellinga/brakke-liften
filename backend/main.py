@@ -3,7 +3,7 @@ from typing import Annotated
 
 from db import get_session
 from fastapi import Depends, FastAPI, HTTPException
-from models import Item
+from models import Lift
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -38,23 +38,23 @@ def get_status():
     }
 
 
-@app.get("/svc/api/items")
-async def get_items(session: SessionDep):
-    items = (await session.scalars(select(Item).order_by(Item.id))).all()
+@app.get("/svc/api/lifts")
+async def get_lifts(session: SessionDep):
+    lifts = (await session.scalars(select(Lift).order_by(Lift.id))).all()
 
     return {
-        "items": [item.as_dict() for item in items],
-        "count": len(items),
+        "lifts": [lift.as_dict() for lift in lifts],
+        "count": len(lifts),
     }
 
 
-@app.get("/svc/api/items/{item_id}")
-async def get_item(item_id: int, session: SessionDep):
-    item = await session.get(Item, item_id)
-    if item is None:
-        raise HTTPException(status_code=404, detail="Item not found")
+@app.get("/svc/api/lifts/{lift_id}")
+async def get_lift(lift_id: int, session: SessionDep):
+    lift = await session.get(Lift, lift_id)
+    if lift is None:
+        raise HTTPException(status_code=404, detail="Lift not found")
 
-    return {"item": item.as_dict()}
+    return {"lift": lift.as_dict()}
 
 
 @app.get("/svc/api/cron")

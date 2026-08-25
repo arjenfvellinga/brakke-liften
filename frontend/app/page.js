@@ -27,7 +27,7 @@ export default function Home() {
           </a>
           <div className="nav-links">
             <a href={`${BACKEND}/status`}>Status</a>
-            <a href={`${BACKEND}/items`}>Items</a>
+            <a href={`${BACKEND}/lifts`}>Lifts</a>
           </div>
         </nav>
       </header>
@@ -94,10 +94,10 @@ export default function Home() {
             <h3>FastAPI Sample Data</h3>
             <p>
               Open the backend sample data endpoint at{" "}
-              <code>/svc/api/items</code>.
+              <code>/svc/api/lifts</code>.
             </p>
-            <a href={`${BACKEND}/items`} className="card-link">
-              Open /svc/api/items →
+            <a href={`${BACKEND}/lifts`} className="card-link">
+              Open /svc/api/lifts →
             </a>
           </div>
         </div>

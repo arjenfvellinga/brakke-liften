@@ -10,7 +10,7 @@ class Base(DeclarativeBase):
     pass
 
 
-class Item(Base):
+class Lift(Base):
     __tablename__ = "lifts"
 
     id: Mapped[int] = mapped_column(primary_key=True)

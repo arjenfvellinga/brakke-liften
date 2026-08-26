@@ -47,6 +47,7 @@ export default function Home() {
     return stations.filter(
       (station) =>
         station.stationCode.toLowerCase().includes(needle) ||
+        (station.stationName || "").toLowerCase().includes(needle) ||
         station.lifts.some((lift) => lift.name.toLowerCase().includes(needle)),
     );
   }, [stations, query]);
@@ -90,7 +91,7 @@ export default function Home() {
               type="search"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Filter op stationscode of liftnaam…"
+              placeholder="Filter op station of liftnaam…"
               aria-label="Filter stations"
             />
             <div className="totals">
@@ -121,7 +122,14 @@ export default function Home() {
           {filtered.map((station) => (
             <section className="station" key={station.stationCode}>
               <div className="station-head">
-                <h2>{station.stationCode}</h2>
+                <div className="station-title">
+                  {/* No name known for this code: the code is the heading, so
+                      showing it again as a subtitle would just repeat it. */}
+                  <h2>{station.stationName || station.stationCode}</h2>
+                  {station.stationName && (
+                    <span className="station-code">{station.stationCode}</span>
+                  )}
+                </div>
                 <div className="counts">
                   {station.closedCount > 0 && (
                     <span className="badge down">

@@ -2,8 +2,9 @@ import "./globals.css";
 import { Analytics } from "@vercel/analytics/next";
 
 export const metadata = {
-  title: "Next.js + FastAPI Services Demo",
-  description: "Vercel Services example with Next.js frontend and FastAPI backend.",
+  title: "Brakke Liften",
+  description:
+    "NS-stations met liften die buiten dienst of van onbekende status zijn.",
 };
 
 export default function RootLayout({ children }) {

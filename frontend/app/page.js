@@ -1,22 +1,67 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || "/svc/api";
 
-export default function Home() {
-  const [response, setResponse] = useState(null);
-  const [loading, setLoading] = useState({ frontend: false, backend: false });
+// The upstream `open` values, mapped onto the presentation used throughout.
+const STATUS = {
+  Yes: { label: "In bedrijf", className: "ok" },
+  No: { label: "Buiten dienst", className: "down" },
+  Unknown: { label: "Onbekend", className: "unknown" },
+};
 
-  async function call(key, url) {
-    setLoading((prev) => ({ ...prev, [key]: true }));
-    try {
-      const res = await fetch(url, { cache: "no-store" });
-      setResponse(await res.json());
-    } finally {
-      setLoading((prev) => ({ ...prev, [key]: false }));
+function statusOf(open) {
+  return STATUS[open] || { label: open, className: "unknown" };
+}
+
+export default function Home() {
+  const [stations, setStations] = useState(null);
+  const [error, setError] = useState(null);
+  const [query, setQuery] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function load() {
+      try {
+        const res = await fetch(`${BACKEND}/stations`, { cache: "no-store" });
+        if (!res.ok) throw new Error(`Backend returned ${res.status}`);
+        const data = await res.json();
+        if (!cancelled) setStations(data.stations);
+      } catch (err) {
+        if (!cancelled) setError(err.message);
+      }
     }
-  }
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const filtered = useMemo(() => {
+    if (!stations) return [];
+    const needle = query.trim().toLowerCase();
+    if (!needle) return stations;
+    return stations.filter(
+      (station) =>
+        station.stationCode.toLowerCase().includes(needle) ||
+        station.lifts.some((lift) => lift.name.toLowerCase().includes(needle)),
+    );
+  }, [stations, query]);
+
+  const totals = useMemo(
+    () =>
+      filtered.reduce(
+        (acc, station) => ({
+          closed: acc.closed + station.closedCount,
+          unknown: acc.unknown + station.unknownCount,
+        }),
+        { closed: 0, unknown: 0 },
+      ),
+    [filtered],
+  );
 
   return (
     <>
@@ -26,87 +71,94 @@ export default function Home() {
             Brakke Liften
           </a>
           <div className="nav-links">
-            <a href={`${BACKEND}/status`}>Status</a>
-            <a href={`${BACKEND}/lifts`}>Lifts</a>
+            <a href={`${BACKEND}/stations`}>API</a>
+            <a href={`${BACKEND}/docs`}>Docs</a>
           </div>
         </nav>
       </header>
 
       <main>
-        <h1>Next.js + FastAPI</h1>
+        <h1>Stations met brakke liften</h1>
+        <p className="lede">
+          Stations waar minstens één lift buiten dienst of van onbekende status
+          is, gegroepeerd op stationscode.
+        </p>
 
-        <div className="hero-code">
-          <pre>
-            <code
-              dangerouslySetInnerHTML={{
-                __html: `<span class="comment">// vercel.json</span>
-{
-  <span class="key">"services"</span>: {
-    <span class="key">"frontend"</span>: {
-      <span class="key">"root"</span>: <span class="string">"frontend/"</span>,
-      <span class="key">"framework"</span>: <span class="string">"nextjs"</span>
-    },
-    <span class="key">"backend"</span>: {
-      <span class="key">"root"</span>: <span class="string">"backend/"</span>,
-      <span class="key">"entrypoint"</span>: <span class="string">"main:app"</span>
-    }
-  },
-  <span class="key">"rewrites"</span>: [
-    { <span class="key">"source"</span>: <span class="string">"/svc/api/:path*"</span>, <span class="key">"destination"</span>: { <span class="key">"service"</span>: <span class="string">"backend"</span> } },
-    { <span class="key">"source"</span>: <span class="string">"/(.*)"</span>, <span class="key">"destination"</span>: { <span class="key">"service"</span>: <span class="string">"frontend"</span> } }
-  ]
-}`,
-              }}
+        {stations && (
+          <div className="toolbar">
+            <input
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Filter op stationscode of liftnaam…"
+              aria-label="Filter stations"
             />
-          </pre>
-        </div>
-
-        <div className="cards">
-          <div className="card">
-            <h3>Next.js API Route</h3>
-            <p>
-              Calls <code>/api/hello</code>, a route handler running on the
-              Next.js frontend service.
-            </p>
-            <button
-              onClick={() => call("frontend", "/api/hello")}
-              disabled={loading.frontend}
-            >
-              {loading.frontend ? "Loading..." : "Call /api/hello →"}
-            </button>
-          </div>
-
-          <div className="card">
-            <h3>FastAPI Backend Route</h3>
-            <p>
-              Calls <code>/svc/api/status</code> directly on the FastAPI
-              backend service.
-            </p>
-            <button
-              onClick={() => call("backend", `${BACKEND}/status`)}
-              disabled={loading.backend}
-            >
-              {loading.backend ? "Loading..." : "Call /svc/api/status →"}
-            </button>
-          </div>
-
-          <div className="card">
-            <h3>FastAPI Sample Data</h3>
-            <p>
-              Open the backend sample data endpoint at{" "}
-              <code>/svc/api/lifts</code>.
-            </p>
-            <a href={`${BACKEND}/lifts`} className="card-link">
-              Open /svc/api/lifts →
-            </a>
-          </div>
-        </div>
-
-        {response && (
-          <div className="response">
-            <pre>{JSON.stringify(response, null, 2)}</pre>
+            <div className="totals">
+              <span>
+                <strong>{filtered.length}</strong> stations
+              </span>
+              <span className="down">
+                <strong>{totals.closed}</strong> buiten dienst
+              </span>
+              <span className="unknown">
+                <strong>{totals.unknown}</strong> onbekend
+              </span>
+            </div>
           </div>
         )}
+
+        {error && <p className="notice error">Laden mislukt: {error}</p>}
+        {!stations && !error && <p className="notice">Laden…</p>}
+        {stations && filtered.length === 0 && (
+          <p className="notice">
+            {stations.length === 0
+              ? "Geen station heeft op dit moment een lift buiten dienst."
+              : "Geen station komt overeen met dit filter."}
+          </p>
+        )}
+
+        <div className="stations">
+          {filtered.map((station) => (
+            <section className="station" key={station.stationCode}>
+              <div className="station-head">
+                <h2>{station.stationCode}</h2>
+                <div className="counts">
+                  {station.closedCount > 0 && (
+                    <span className="badge down">
+                      {station.closedCount} buiten dienst
+                    </span>
+                  )}
+                  {station.unknownCount > 0 && (
+                    <span className="badge unknown">
+                      {station.unknownCount} onbekend
+                    </span>
+                  )}
+                  <span className="badge muted">
+                    {station.liftCount} {station.liftCount === 1 ? "lift" : "liften"}
+                  </span>
+                </div>
+              </div>
+
+              <ul className="lifts">
+                {station.lifts.map((lift) => {
+                  const status = statusOf(lift.open);
+                  return (
+                    <li className={`lift ${status.className}`} key={lift.id}>
+                      <span className="dot" aria-hidden="true" />
+                      <span className="lift-name">{lift.name}</span>
+                      {lift.platform && (
+                        <span className="platform">spoor {lift.platform}</span>
+                      )}
+                      <span className="lift-status">
+                        {lift.statusLabel || status.label}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          ))}
+        </div>
       </main>
     </>
   );

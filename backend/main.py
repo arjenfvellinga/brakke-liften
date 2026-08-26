@@ -5,7 +5,7 @@ from typing import Annotated
 
 from db import get_session
 from fastapi import Depends, FastAPI, Header, HTTPException
-from models import Lift
+from models import Lift, LiftOpen
 from ns import sync_lifts
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -48,6 +48,50 @@ async def get_lifts(session: SessionDep):
     return {
         "lifts": [lift.as_dict() for lift in lifts],
         "count": len(lifts),
+    }
+
+
+@app.get("/svc/api/stations")
+async def get_stations(session: SessionDep):
+    """Stations that have at least one lift not confirmed open.
+
+    A station is included when any of its lifts reports `No` or `Unknown`; the
+    station then carries *all* of its lifts, so the working ones next to a
+    broken one stay visible.
+    """
+    affected = (
+        select(Lift.station_code)
+        .where(Lift.open.in_((LiftOpen.NO, LiftOpen.UNKNOWN)))
+        .distinct()
+    )
+    lifts = (
+        await session.scalars(
+            select(Lift)
+            .where(Lift.station_code.in_(affected))
+            .order_by(Lift.station_code, Lift.name, Lift.id)
+        )
+    ).all()
+
+    stations: dict[str, list[Lift]] = {}
+    for lift in lifts:
+        stations.setdefault(lift.station_code, []).append(lift)
+
+    return {
+        "stations": [
+            {
+                "stationCode": station_code,
+                "liftCount": len(station_lifts),
+                "closedCount": sum(
+                    1 for lift in station_lifts if lift.open is LiftOpen.NO
+                ),
+                "unknownCount": sum(
+                    1 for lift in station_lifts if lift.open is LiftOpen.UNKNOWN
+                ),
+                "lifts": [lift.as_dict() for lift in station_lifts],
+            }
+            for station_code, station_lifts in stations.items()
+        ],
+        "count": len(stations),
     }
 
 

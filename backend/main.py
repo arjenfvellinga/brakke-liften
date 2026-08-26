@@ -49,7 +49,7 @@ async def get_lifts(session: SessionDep):
 
 
 @app.get("/svc/api/lifts/{lift_id}")
-async def get_lift(lift_id: int, session: SessionDep):
+async def get_lift(lift_id: str, session: SessionDep):
     lift = await session.get(Lift, lift_id)
     if lift is None:
         raise HTTPException(status_code=404, detail="Lift not found")

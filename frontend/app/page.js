@@ -69,7 +69,7 @@ export default function Home() {
       <header>
         <h1>Stations met brakke liften</h1>
         <p className="lede">
-          Stations waar minstens één lift buiten dienst of van de status onbekend is.
+          Stations waar minstens één lift buiten dienst is of waarvan de status onbekend is.
         </p>
       </header>
 

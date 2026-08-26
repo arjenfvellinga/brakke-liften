@@ -8,21 +8,26 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from sqlalchemy.pool import NullPool
 
 
-def get_database_url() -> str:
-    """Return DATABASE_URL with an async driver forced onto it."""
+def load_local_env() -> None:
+    """Load .env.local into the environment, if it and python-dotenv exist."""
     try:
         from dotenv import load_dotenv
     except ImportError:
         # python-dotenv is a dev-only dependency; deployments get real
         # environment variables and need no file at all.
-        pass
-    else:
-        # .env.local lives at the monorepo root, one level up from backend/.
-        # override=True: `vercel dev` injects the Vercel project's Development
-        # env vars (including a DATABASE_URL pointing at hosted Postgres), and
-        # locally .env.local is meant to win over those. The file is gitignored,
-        # so deployments have none and keep their real environment variables.
-        load_dotenv(Path(__file__).resolve().parents[1] / ".env.local", override=True)
+        return
+
+    # .env.local lives at the monorepo root, one level up from backend/.
+    # override=True: `vercel dev` injects the Vercel project's Development
+    # env vars (including a DATABASE_URL pointing at hosted Postgres), and
+    # locally .env.local is meant to win over those. The file is gitignored,
+    # so deployments have none and keep their real environment variables.
+    load_dotenv(Path(__file__).resolve().parents[1] / ".env.local", override=True)
+
+
+def get_database_url() -> str:
+    """Return DATABASE_URL with an async driver forced onto it."""
+    load_local_env()
 
     url = os.environ.get("DATABASE_URL")
     if not url:

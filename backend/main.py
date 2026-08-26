@@ -1,9 +1,12 @@
+import os
+import secrets
 from datetime import UTC, datetime
 from typing import Annotated
 
 from db import get_session
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, Header, HTTPException
 from models import Lift
+from ns import sync_lifts
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -57,6 +60,26 @@ async def get_lift(lift_id: str, session: SessionDep):
     return {"lift": lift.as_dict()}
 
 
+def authorize_cron(authorization: str | None) -> None:
+    """Reject unauthorized callers when a CRON_SECRET is configured.
+
+    Vercel sends `Authorization: Bearer $CRON_SECRET` when the project has that
+    variable set. With no secret configured there is nothing to compare against
+    and the endpoint stays open — set CRON_SECRET so the sync (which hits the NS
+    API and writes to the database) cannot be triggered by anyone.
+    """
+    secret = os.environ.get("CRON_SECRET")
+    if secret and not secrets.compare_digest(
+        authorization or "", f"Bearer {secret}"
+    ):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+
 @app.get("/svc/api/cron")
-def cron():
-    return {"ok": "true"}
+async def cron(
+    session: SessionDep,
+    authorization: Annotated[str | None, Header()] = None,
+):
+    authorize_cron(authorization)
+
+    return {"ok": True, "lifts": await sync_lifts(session)}

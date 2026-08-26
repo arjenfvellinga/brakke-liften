@@ -27,49 +27,6 @@ body {
   flex-direction: column;
 }
 
-/* ── Nav ─────────────────────────────────────────── */
-
-header {
-  border-bottom: 1px solid var(--line);
-}
-
-nav {
-  max-width: 1000px;
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  padding: 1rem 2rem;
-  gap: 2rem;
-}
-
-.logo {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--text);
-  text-decoration: none;
-}
-
-.nav-links {
-  display: flex;
-  gap: 0.5rem;
-  margin-left: auto;
-}
-
-.nav-links a {
-  text-decoration: none;
-  color: var(--muted);
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  transition: all 0.2s ease;
-}
-
-.nav-links a:hover {
-  color: var(--text);
-  background: var(--surface-2);
-}
-
 /* ── Main ────────────────────────────────────────── */
 
 main {

@@ -39,6 +39,12 @@ class Lift(Base):
     identifier: Mapped[str] = mapped_column(String(64), default="lift")
     name: Mapped[str] = mapped_column(String(255))
     station_code: Mapped[str] = mapped_column(String(16), index=True)
+    # Not upstream: the human-readable station name, resolved from
+    # `stations.json` at sync time so the API can label a lift without every
+    # consumer having to carry its own station_code lookup. Nullable because a
+    # code the file does not know about (a new or foreign station) still yields
+    # a perfectly valid lift row.
+    station_name: Mapped[str | None] = mapped_column(String(255))
     # Optional upstream: lat/lng, and platform where the lift has no platform.
     lat: Mapped[float | None]
     lng: Mapped[float | None]
@@ -72,6 +78,7 @@ class Lift(Base):
             "identifier": self.identifier,
             "name": self.name,
             "stationCode": self.station_code,
+            "stationName": self.station_name,
             "lat": self.lat,
             "lng": self.lng,
             "open": self.open.value,

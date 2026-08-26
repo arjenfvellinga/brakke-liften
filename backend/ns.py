@@ -8,6 +8,7 @@ from models import Lift, LiftOpen
 from sqlalchemy import delete
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
+from stations import station_name
 
 LIFTS_URL = "https://gateway.apiportal.ns.nl/places-api/v1/stationfacility/lifts"
 # The endpoint rejects anything above 500 and offers no offset/cursor, so 500 is
@@ -22,6 +23,7 @@ UPDATABLE_COLUMNS = (
     "identifier",
     "name",
     "station_code",
+    "station_name",
     "lat",
     "lng",
     "open",
@@ -100,6 +102,7 @@ def _as_row(payload: dict) -> dict:
         "identifier": payload.get("identifier") or "lift",
         "name": payload["name"],
         "station_code": payload["stationCode"],
+        "station_name": station_name(payload["stationCode"]),
         "lat": payload.get("lat"),
         "lng": payload.get("lng"),
         "open": status,

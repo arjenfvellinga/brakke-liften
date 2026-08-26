@@ -80,6 +80,7 @@ async def get_stations(session: SessionDep):
         "stations": [
             {
                 "stationCode": station_code,
+                "stationName": station_lifts[0].station_name,
                 "liftCount": len(station_lifts),
                 "closedCount": sum(
                     1 for lift in station_lifts if lift.open is LiftOpen.NO

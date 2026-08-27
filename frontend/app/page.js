@@ -15,6 +15,12 @@ function statusOf(open) {
   return STATUS[open] || { label: open, className: "unknown" };
 }
 
+// Upstream names are all of the form "Lift 1", "Lift perron 2a"; the list is
+// already about lifts, so the prefix carries nothing.
+function liftName(name) {
+  return name.replace(/^Lift\s+/i, "");
+}
+
 // The backend sends `syncedAt` as UTC ISO-8601; toLocaleString renders it in the
 // viewer's own zone, which for a Dutch site is the zone the NS data belongs to.
 // Only ever called after the fetch resolves, so it cannot cause a hydration
@@ -69,7 +75,9 @@ export default function Home() {
       (station) =>
         station.stationCode.toLowerCase().includes(needle) ||
         (station.stationName || "").toLowerCase().includes(needle) ||
-        station.lifts.some((lift) => lift.name.toLowerCase().includes(needle)),
+        station.lifts.some((lift) =>
+          liftName(lift.name).toLowerCase().includes(needle),
+        ),
     );
   }, [stations, query]);
 
@@ -171,7 +179,7 @@ export default function Home() {
                 return (
                   <li className={`lift ${status.className}`} key={lift.id}>
                     <span className="dot" aria-hidden="true" />
-                    <span className="lift-name">{lift.name}</span>
+                    <span className="lift-name">{liftName(lift.name)}</span>
                     {lift.platform && (
                       <span className="platform">spoor {lift.platform}</span>
                     )}

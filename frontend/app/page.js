@@ -21,6 +21,23 @@ function liftName(name) {
   return name.replace(/^Lift\s+/i, "");
 }
 
+function words(value) {
+  return String(value)
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter(Boolean);
+}
+
+// Plenty of names already spell the platform out ("Lift perron 2a"), and the
+// badge next to it would then say the same thing twice. Both sides are compared
+// per word: that keeps a platform "1" from being swallowed by a name mentioning
+// "12", while a platform written "10/11" still matches a name saying "10-11".
+function nameMentionsPlatform(name, platform) {
+  const found = words(name);
+  const needles = words(platform);
+  return needles.length > 0 && needles.every((word) => found.includes(word));
+}
+
 // The backend sends `syncedAt` as UTC ISO-8601; toLocaleString renders it in the
 // viewer's own zone, which for a Dutch site is the zone the NS data belongs to.
 // Only ever called after the fetch resolves, so it cannot cause a hydration
@@ -180,9 +197,10 @@ export default function Home() {
                   <li className={`lift ${status.className}`} key={lift.id}>
                     <span className="dot" aria-hidden="true" />
                     <span className="lift-name">{liftName(lift.name)}</span>
-                    {lift.platform && (
-                      <span className="platform">spoor {lift.platform}</span>
-                    )}
+                    {lift.platform &&
+                      !nameMentionsPlatform(lift.name, lift.platform) && (
+                        <span className="platform">spoor {lift.platform}</span>
+                      )}
                     <span className="lift-status">
                       {lift.statusLabel || status.label}
                     </span>

@@ -5,7 +5,7 @@ from typing import Annotated
 
 from db import get_session
 from fastapi import Depends, FastAPI, Header, HTTPException
-from models import Lift, LiftOpen
+from models import Lift, LiftOpen, SyncState
 from ns import sync_lifts
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -41,6 +41,13 @@ def get_status():
     }
 
 
+async def synced_at(session: AsyncSession) -> str | None:
+    """When the lift data was last synced, ISO-8601, or None before any sync."""
+    stamp = await session.scalar(select(SyncState.synced_at).where(SyncState.id == 1))
+
+    return stamp.isoformat() if stamp else None
+
+
 @app.get("/svc/api/lifts")
 async def get_lifts(session: SessionDep):
     lifts = (await session.scalars(select(Lift).order_by(Lift.id))).all()
@@ -48,6 +55,7 @@ async def get_lifts(session: SessionDep):
     return {
         "lifts": [lift.as_dict() for lift in lifts],
         "count": len(lifts),
+        "syncedAt": await synced_at(session),
     }
 
 
@@ -93,6 +101,7 @@ async def get_stations(session: SessionDep):
             for station_code, station_lifts in stations.items()
         ],
         "count": len(stations),
+        "syncedAt": await synced_at(session),
     }
 
 

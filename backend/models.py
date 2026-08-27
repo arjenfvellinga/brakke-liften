@@ -3,7 +3,7 @@
 from datetime import datetime
 from enum import StrEnum
 
-from sqlalchemy import DateTime, Enum, String, func
+from sqlalchemy import CheckConstraint, DateTime, Enum, String, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -17,6 +17,30 @@ class LiftOpen(StrEnum):
     YES = "Yes"
     NO = "No"
     UNKNOWN = "Unknown"
+
+
+class SyncState(Base):
+    """When the stored lift data was last synced. Exactly one row.
+
+    Kept as its own table rather than derived from the `lifts` rows: `created_at`
+    only reflects an insert, and the sync deliberately leaves it alone when
+    refreshing an existing lift, so a stable table would report a months-old
+    sync.
+    """
+
+    __tablename__ = "sync_state"
+
+    # Pinned to 1 by a CHECK constraint: with a known primary key the sync can
+    # upsert the row without first checking whether it exists, and the table
+    # cannot accumulate a second, contradictory answer. autoincrement=False so
+    # this is a plain integer column and no sequence is created for it.
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=False, default=1)
+    # When the stored lifts were read from the NS API, stamped by the sync right
+    # after the fetch returns — that is the age a consumer cares about, not when
+    # the write happened to commit.
+    synced_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+    __table_args__ = (CheckConstraint("id = 1", name="sync_state_single_row"),)
 
 
 class Lift(Base):

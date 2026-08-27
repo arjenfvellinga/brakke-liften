@@ -15,8 +15,26 @@ function statusOf(open) {
   return STATUS[open] || { label: open, className: "unknown" };
 }
 
+// The backend sends `syncedAt` as UTC ISO-8601; toLocaleString renders it in the
+// viewer's own zone, which for a Dutch site is the zone the NS data belongs to.
+// Only ever called after the fetch resolves, so it cannot cause a hydration
+// mismatch with the server render.
+function formatSynced(iso) {
+  if (!iso) return null;
+  const stamp = new Date(iso);
+  if (Number.isNaN(stamp.getTime())) return null;
+
+  return stamp.toLocaleString("nl-NL", {
+    day: "numeric",
+    month: "long",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 export default function Home() {
   const [stations, setStations] = useState(null);
+  const [syncedAt, setSyncedAt] = useState(null);
   const [error, setError] = useState(null);
   const [query, setQuery] = useState("");
 
@@ -28,7 +46,10 @@ export default function Home() {
         const res = await fetch(`${BACKEND}/stations`, { cache: "no-store" });
         if (!res.ok) throw new Error(`Backend returned ${res.status}`);
         const data = await res.json();
-        if (!cancelled) setStations(data.stations);
+        if (!cancelled) {
+          setStations(data.stations);
+          setSyncedAt(data.syncedAt);
+        }
       } catch (err) {
         if (!cancelled) setError(err.message);
       }
@@ -64,6 +85,8 @@ export default function Home() {
     [filtered],
   );
 
+  const synced = formatSynced(syncedAt);
+
   return (
     <main>
       <header>
@@ -71,6 +94,13 @@ export default function Home() {
         <p className="lede">
           Stations waar minstens één lift buiten dienst is of waarvan de status onbekend is.
         </p>
+        {/* Null until the first sync has run; the NS data is only refreshed
+            once a day, so saying how old it is matters. */}
+        {synced && (
+          <p className="synced">
+            Bijgewerkt op <time dateTime={syncedAt}>{synced}</time>
+          </p>
+        )}
       </header>
 
       {stations && (

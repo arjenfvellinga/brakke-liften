@@ -48,6 +48,17 @@ h1 {
   margin-top: 0.25rem;
 }
 
+.synced {
+  color: var(--muted);
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+}
+
+.synced time {
+  color: #aaa;
+  font-variant-numeric: tabular-nums;
+}
+
 /* ── Toolbar ─────────────────────────────────────── */
 
 .toolbar {

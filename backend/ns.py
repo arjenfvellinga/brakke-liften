@@ -1,10 +1,11 @@
 """NS Places API client and the lift sync that feeds the `lifts` table."""
 
 import os
+from datetime import UTC, datetime
 
 import httpx
 from db import load_local_env
-from models import Lift, LiftOpen
+from models import Lift, LiftOpen, SyncState
 from sqlalchemy import delete
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -114,28 +115,41 @@ def _as_row(payload: dict) -> dict:
 async def sync_lifts(session: AsyncSession) -> dict:
     """Replace the stored lifts with what the Places API currently reports."""
     payload = await fetch_lifts()
+    fetched_at = datetime.now(UTC)
 
     # Dedupe by id: ON CONFLICT cannot touch the same row twice in one statement.
     rows = {row["id"]: row for row in (_as_row(item) for item in payload)}
     if not rows:
         # An empty response is far more likely to be an upstream problem than
-        # every NS lift disappearing, so keep what we have.
+        # every NS lift disappearing, so keep what we have — and leave
+        # sync_state alone, since the stored lifts are still as old as they were.
         return {"fetched": 0, "stored": 0, "removed": 0, "note": "empty response"}
 
-    statement = insert(Lift).values(list(rows.values()))
+    lift_insert = insert(Lift).values(list(rows.values()))
     await session.execute(
-        statement.on_conflict_do_update(
+        lift_insert.on_conflict_do_update(
             index_elements=[Lift.id],
-            set_={column: statement.excluded[column] for column in UPDATABLE_COLUMNS},
+            set_={column: lift_insert.excluded[column] for column in UPDATABLE_COLUMNS},
         )
     )
     # Lifts that vanished upstream (decommissioned, re-identified) should not
     # linger as permanently stale rows.
     removed = await session.execute(delete(Lift).where(Lift.id.notin_(rows)))
+
+    # Same transaction as the rows it describes, so the stamp can never claim
+    # data that was not stored. The row does not exist before the first sync.
+    state_insert = insert(SyncState).values(id=1, synced_at=fetched_at)
+    await session.execute(
+        state_insert.on_conflict_do_update(
+            index_elements=[SyncState.id],
+            set_={"synced_at": state_insert.excluded.synced_at},
+        )
+    )
     await session.commit()
 
     return {
         "fetched": len(payload),
         "stored": len(rows),
         "removed": removed.rowcount,
+        "syncedAt": fetched_at.isoformat(),
     }

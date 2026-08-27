@@ -11,10 +11,22 @@ function statusOf(open) {
   return STATUS[open] || { label: open, className: "unknown" };
 }
 
-// Upstream names are all of the form "Lift 1", "Lift perron 2a"; the list is
-// already about lifts, so the prefix carries nothing.
-export function liftName(name) {
-  return name.replace(/^Lift\s+/i, "");
+// Upstream names are all of the form "Lift 1", "Lift perron 2a", and some are
+// prefixed with the station code ("ASD Lift 1"). Both the code and the "Lift"
+// are already established by the card the name sits in, so neither carries
+// anything. Stripping the code first: it comes before the prefix.
+export function liftName(name, stationCode) {
+  let stripped = name;
+
+  stripped = stripped.replace(/^Lift\s+/i, "");
+
+  if (stationCode && stripped.toLowerCase().startsWith(stationCode.toLowerCase())) {
+    stripped = stripped.slice(stationCode.length).replace(/^[\s:_-]+/, "");
+  }
+
+  // A name that was nothing but the code and the prefix would strip to nothing;
+  // showing the untouched name beats showing an empty row.
+  return stripped || name;
 }
 
 function words(value) {
@@ -79,7 +91,9 @@ export function StationCard({ station, linked = false }) {
           return (
             <li className={`lift ${status.className}`} key={lift.id}>
               <span className="dot" aria-hidden="true" />
-              <span className="lift-name">{liftName(lift.name)}</span>
+              <span className="lift-name">
+                {liftName(lift.name, lift.stationCode)}
+              </span>
               {lift.platform &&
                 !nameMentionsPlatform(lift.name, lift.platform) && (
                   <span className="platform">spoor {lift.platform}</span>

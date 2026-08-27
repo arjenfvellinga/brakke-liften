@@ -43,7 +43,7 @@ export default function Home() {
         station.stationCode.toLowerCase().includes(needle) ||
         (station.stationName || "").toLowerCase().includes(needle) ||
         station.lifts.some((lift) =>
-          liftName(lift.name).toLowerCase().includes(needle),
+          liftName(lift.name, lift.stationCode).toLowerCase().includes(needle),
         ),
     );
   }, [stations, query]);

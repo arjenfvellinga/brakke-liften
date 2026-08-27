@@ -74,6 +74,20 @@ async def get_lifts(session: FreshSessionDep):
     }
 
 
+def station_payload(station_code: str, station_lifts: list[Lift]) -> dict:
+    """One station and all of its lifts, as the station routes return it."""
+    return {
+        "stationCode": station_code,
+        "stationName": station_lifts[0].station_name,
+        "liftCount": len(station_lifts),
+        "closedCount": sum(1 for lift in station_lifts if lift.open is LiftOpen.NO),
+        "unknownCount": sum(
+            1 for lift in station_lifts if lift.open is LiftOpen.UNKNOWN
+        ),
+        "lifts": [lift.as_dict() for lift in station_lifts],
+    }
+
+
 @app.get("/svc/api/stations")
 async def get_stations(session: FreshSessionDep):
     """Stations that have at least one lift not confirmed open.
@@ -101,21 +115,36 @@ async def get_stations(session: FreshSessionDep):
 
     return {
         "stations": [
-            {
-                "stationCode": station_code,
-                "stationName": station_lifts[0].station_name,
-                "liftCount": len(station_lifts),
-                "closedCount": sum(
-                    1 for lift in station_lifts if lift.open is LiftOpen.NO
-                ),
-                "unknownCount": sum(
-                    1 for lift in station_lifts if lift.open is LiftOpen.UNKNOWN
-                ),
-                "lifts": [lift.as_dict() for lift in station_lifts],
-            }
+            station_payload(station_code, station_lifts)
             for station_code, station_lifts in stations.items()
         ],
         "count": len(stations),
+        "syncedAt": await synced_at(session),
+    }
+
+
+@app.get("/svc/api/stations/{station_code}")
+async def get_station(station_code: str, session: FreshSessionDep):
+    """A single station with all of its lifts.
+
+    Unlike the list route this does not require the station to have a broken
+    lift: a station whose lifts have since been repaired should still answer on
+    its own URL rather than 404.
+    """
+    # Upstream codes are uppercase ("ASD"); a hand-typed or shared URL may not be.
+    station_code = station_code.upper()
+    lifts = (
+        await session.scalars(
+            select(Lift)
+            .where(Lift.station_code == station_code)
+            .order_by(Lift.name, Lift.id)
+        )
+    ).all()
+    if not lifts:
+        raise HTTPException(status_code=404, detail="Station not found")
+
+    return {
+        "station": station_payload(station_code, list(lifts)),
         "syncedAt": await synced_at(session),
     }
 

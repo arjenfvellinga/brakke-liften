@@ -48,6 +48,20 @@ h1 {
   margin-top: 0.25rem;
 }
 
+.back {
+  font-size: 0.85rem;
+  margin-bottom: 0.75rem;
+}
+
+.back a {
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.back a:hover {
+  color: var(--text);
+}
+
 .synced {
   color: var(--muted);
   margin-top: 0.5rem;
@@ -132,6 +146,14 @@ h1 {
   gap: 1rem;
 }
 
+/* One card on its own page: the grid's column width would leave it stranded at
+   320px on a wide screen, but a full 1000px row of two-word lift names is no
+   better. */
+.station-single {
+  max-width: 520px;
+  margin-top: 2rem;
+}
+
 .station {
   background: var(--surface);
   border: 1px solid var(--line);
@@ -160,6 +182,16 @@ h1 {
   font-size: 1.05rem;
   font-weight: 700;
   letter-spacing: 0.01em;
+}
+
+.station-head h2 a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.station-head h2 a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .station-code {

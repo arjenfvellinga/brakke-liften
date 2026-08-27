@@ -37,8 +37,15 @@ class SyncState(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=False, default=1)
     # When the stored lifts were read from the NS API, stamped by the sync right
     # after the fetch returns — that is the age a consumer cares about, not when
-    # the write happened to commit.
-    synced_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    # the write happened to commit. Null until a sync has actually stored data:
+    # the row is created by the first *attempt*, which may fail.
+    synced_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # When a sync was last started, committed before the fetch so it survives a
+    # failure — or a serverless invocation that is killed mid-fetch. That is
+    # what lets the request-triggered sync back off instead of re-attempting a
+    # broken upstream on every request. Within one successful sync it sits just
+    # before synced_at, by however long the fetch took.
+    attempted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     __table_args__ = (CheckConstraint("id = 1", name="sync_state_single_row"),)
 

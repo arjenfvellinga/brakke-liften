@@ -6,11 +6,26 @@ from typing import Annotated
 from db import get_session
 from fastapi import Depends, FastAPI, Header, HTTPException
 from models import Lift, LiftOpen, SyncState
-from ns import sync_lifts
+from ns import sync_if_stale, sync_lifts
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
+
+
+async def get_fresh_session(session: SessionDep) -> AsyncSession:
+    """A session whose lift data has been refreshed if it had gone stale.
+
+    The Vercel cron only runs once a day on the free plan, so the lift routes
+    top the data up themselves: every request checks the age of the last sync
+    and one of them re-syncs once it passes `ns.MAX_AGE`.
+    """
+    await sync_if_stale(session)
+
+    return session
+
+
+FreshSessionDep = Annotated[AsyncSession, Depends(get_fresh_session)]
 
 app = FastAPI(
     title="Brakke Liften",
@@ -49,7 +64,7 @@ async def synced_at(session: AsyncSession) -> str | None:
 
 
 @app.get("/svc/api/lifts")
-async def get_lifts(session: SessionDep):
+async def get_lifts(session: FreshSessionDep):
     lifts = (await session.scalars(select(Lift).order_by(Lift.id))).all()
 
     return {
@@ -60,7 +75,7 @@ async def get_lifts(session: SessionDep):
 
 
 @app.get("/svc/api/stations")
-async def get_stations(session: SessionDep):
+async def get_stations(session: FreshSessionDep):
     """Stations that have at least one lift not confirmed open.
 
     A station is included when any of its lifts reports `No` or `Unknown`; the
@@ -106,7 +121,7 @@ async def get_stations(session: SessionDep):
 
 
 @app.get("/svc/api/lifts/{lift_id}")
-async def get_lift(lift_id: str, session: SessionDep):
+async def get_lift(lift_id: str, session: FreshSessionDep):
     lift = await session.get(Lift, lift_id)
     if lift is None:
         raise HTTPException(status_code=404, detail="Lift not found")

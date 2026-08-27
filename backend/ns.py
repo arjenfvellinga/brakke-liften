@@ -1,21 +1,40 @@
 """NS Places API client and the lift sync that feeds the `lifts` table."""
 
+import logging
 import os
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 import httpx
 from db import load_local_env
 from models import Lift, LiftOpen, SyncState
-from sqlalchemy import delete
+from sqlalchemy import delete, func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from stations import station_name
+
+logger = logging.getLogger(__name__)
 
 LIFTS_URL = "https://gateway.apiportal.ns.nl/places-api/v1/stationfacility/lifts"
 # The endpoint rejects anything above 500 and offers no offset/cursor, so 500 is
 # also the hard ceiling on what one request can return.
 LIFTS_LIMIT = 500
 TIMEOUT = 30.0
+
+# How old the stored lifts may get before a request refreshes them. The Vercel
+# cron can only fire once a day on the free plan, so requests carry the rest of
+# the schedule (see sync_if_stale).
+MAX_AGE = timedelta(minutes=15)
+
+# How long a started sync suppresses further attempts. Covers both a sync still
+# in flight and one that failed: shorter than MAX_AGE so a transient NS error
+# recovers well before the data is noticeably old, long enough that a sustained
+# outage is not re-attempted by every single request.
+RETRY_AFTER = timedelta(minutes=2)
+
+# Advisory lock claimed by the request that does a stale-triggered sync. The
+# value is arbitrary but must be the same everywhere, otherwise two concurrent
+# requests take different locks and both hit the NS API.
+SYNC_LOCK_KEY = 8_400_280
 
 # Everything except the primary key and created_at: on conflict these are what
 # gets refreshed from upstream.
@@ -112,8 +131,32 @@ def _as_row(payload: dict) -> dict:
     }
 
 
+async def record_attempt(session: AsyncSession) -> datetime:
+    """Stamp `attempted_at` and commit it, before anything can go wrong.
+
+    Committed on its own so it outlives a failed fetch — including one whose
+    invocation is killed outright, which no `except` would catch. This is the
+    row's first appearance when no sync has ever succeeded, hence a null
+    `synced_at`: nothing has been stored yet.
+    """
+    attempted_at = datetime.now(UTC)
+
+    state_insert = insert(SyncState).values(id=1, attempted_at=attempted_at)
+    await session.execute(
+        state_insert.on_conflict_do_update(
+            index_elements=[SyncState.id],
+            set_={"attempted_at": state_insert.excluded.attempted_at},
+        )
+    )
+    await session.commit()
+
+    return attempted_at
+
+
 async def sync_lifts(session: AsyncSession) -> dict:
     """Replace the stored lifts with what the Places API currently reports."""
+    await record_attempt(session)
+
     payload = await fetch_lifts()
     fetched_at = datetime.now(UTC)
 
@@ -121,8 +164,9 @@ async def sync_lifts(session: AsyncSession) -> dict:
     rows = {row["id"]: row for row in (_as_row(item) for item in payload)}
     if not rows:
         # An empty response is far more likely to be an upstream problem than
-        # every NS lift disappearing, so keep what we have — and leave
-        # sync_state alone, since the stored lifts are still as old as they were.
+        # every NS lift disappearing, so keep what we have — and leave synced_at
+        # alone, since the stored lifts are still as old as they were. The
+        # attempt is already recorded, so this backs off like a failure.
         return {"fetched": 0, "stored": 0, "removed": 0, "note": "empty response"}
 
     lift_insert = insert(Lift).values(list(rows.values()))
@@ -137,7 +181,7 @@ async def sync_lifts(session: AsyncSession) -> dict:
     removed = await session.execute(delete(Lift).where(Lift.id.notin_(rows)))
 
     # Same transaction as the rows it describes, so the stamp can never claim
-    # data that was not stored. The row does not exist before the first sync.
+    # data that was not stored. The row itself was created by record_attempt.
     state_insert = insert(SyncState).values(id=1, synced_at=fetched_at)
     await session.execute(
         state_insert.on_conflict_do_update(
@@ -153,3 +197,62 @@ async def sync_lifts(session: AsyncSession) -> dict:
         "removed": removed.rowcount,
         "syncedAt": fetched_at.isoformat(),
     }
+
+
+async def sync_due(session: AsyncSession) -> bool:
+    """Whether a request-triggered refresh should run now.
+
+    Due when the stored lifts have aged past MAX_AGE, unless a sync was started
+    within the last RETRY_AFTER — that one is either still running or failed,
+    and either way re-attempting it immediately would only repeat the work.
+    """
+    state = (
+        await session.execute(
+            select(SyncState.synced_at, SyncState.attempted_at).where(SyncState.id == 1)
+        )
+    ).first()
+    if state is None:
+        # Never even attempted, so there is nothing stored to serve.
+        return True
+
+    now = datetime.now(UTC)
+    synced_at, attempted_at = state
+    if synced_at is not None and now - synced_at < MAX_AGE:
+        return False
+
+    return attempted_at is None or now - attempted_at >= RETRY_AFTER
+
+
+async def sync_if_stale(session: AsyncSession) -> dict | None:
+    """Refresh the lifts when the stored data has aged past MAX_AGE.
+
+    Returns the sync result, or None when nothing was synced — because the data
+    was still fresh, another request had a sync under way, or the refresh failed.
+    """
+    if not await sync_due(session):
+        return None
+
+    # pg_try_advisory_xact_lock returns immediately instead of waiting: one
+    # request does the sync while any request that arrives meanwhile serves the
+    # data it already has, rather than queueing behind a multi-second NS fetch.
+    # The lock only has to hold until the attempt is committed — from then on
+    # attempted_at is what holds other requests off, across instances and for
+    # the whole fetch.
+    if not await session.scalar(select(func.pg_try_advisory_xact_lock(SYNC_LOCK_KEY))):
+        return None
+
+    # A sync may have started between the check above and the lock being
+    # granted; at READ COMMITTED this re-read sees its committed attempt.
+    if not await sync_due(session):
+        return None
+
+    try:
+        return await sync_lifts(session)
+    except Exception:
+        # A failed refresh must not fail the request that triggered it: the
+        # stored lifts are still worth serving, only older than we would like.
+        # The attempt is recorded, so the retry waits out RETRY_AFTER.
+        logger.exception("stale-triggered lift sync failed")
+        await session.rollback()
+
+        return None

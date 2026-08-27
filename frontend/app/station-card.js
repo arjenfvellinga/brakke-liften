@@ -46,12 +46,26 @@ function nameMentionsPlatform(name, platform) {
   return needles.length > 0 && needles.every((word) => found.includes(word));
 }
 
+// Sorted on the *displayed* name, not the upstream one: the backend's ordering
+// is by the raw name, so a card mixing "Lift 2" with "ASD Lift 1" comes out in
+// an order the stripped names no longer explain. `numeric` so lift 10 follows
+// lift 9 instead of lift 1.
+function byName(a, b) {
+  return liftName(a.name, a.stationCode).localeCompare(
+    liftName(b.name, b.stationCode),
+    "nl",
+    { numeric: true, sensitivity: "base" },
+  );
+}
+
 // `linked` is off on the station's own page: the heading would link to the page
 // it is already on.
 export function StationCard({ station, linked = false }) {
   // No name known for this code: the code is the heading, so showing it again
   // as a subtitle would just repeat it.
   const heading = station.stationName || station.stationCode;
+  // Copied first — sort mutates, and the array belongs to the caller's state.
+  const lifts = [...station.lifts].sort(byName);
 
   return (
     <section className="station">
@@ -86,7 +100,7 @@ export function StationCard({ station, linked = false }) {
       </div>
 
       <ul className="lifts">
-        {station.lifts.map((lift) => {
+        {lifts.map((lift) => {
           const status = statusOf(lift.open);
           return (
             <li className={`lift ${status.className}`} key={lift.id}>

@@ -1,316 +1,610 @@
-* {
-  margin: 0;
-  padding: 0;
+/* Modernist: flat surfaces, square corners, hairline rules, one red accent.
+   Tokens below are the design system's; everything under them is this app. */
+
+:root {
+  --color-bg: #f3f2f2;
+  --color-surface: #eae9e9;
+  --color-text: #201e1d;
+  --color-accent: #ec3013;
+  --color-divider: color-mix(in srgb, #201e1d 40%, transparent);
+
+  --color-neutral-100: #f8f4f4;
+  --color-neutral-200: #eae7e7;
+  --color-neutral-400: #bab6b6;
+  --color-neutral-500: #9b9797;
+  --color-neutral-700: #605d5d;
+  --color-neutral-800: #444141;
+  --color-neutral-900: #2d2b2b;
+
+  --color-accent-100: #fff2ef;
+  --color-accent-700: #ae1800;
+  --color-accent-800: #7c1405;
+
+  /* Archivo, loaded by next/font in layout.js. */
+  --font-body: var(--font-archivo), system-ui, sans-serif;
+
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+
+  /* The system sets every radius to 0; kept as a token so a component that
+     wants a corner has to say so deliberately. */
+  --radius: 0px;
+
+  /* Muted text, as a mix rather than a flat grey, so it stays keyed to the ink
+     colour above. */
+  --ink-70: color-mix(in srgb, var(--color-text) 70%, transparent);
+  --ink-55: color-mix(in srgb, var(--color-text) 55%, transparent);
+  --ink-45: color-mix(in srgb, var(--color-text) 45%, transparent);
+}
+
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
-:root {
-  --bg: #000;
-  --surface: #0e0e0e;
-  --surface-2: #161616;
-  --line: #2a2a2a;
-  --text: #fff;
-  --muted: #888;
-  --down: #ff5f56;
-  --unknown: #f5b83d;
-  --ok: #3ecf8e;
-}
-
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
-    Ubuntu, Cantarell, sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  line-height: 1.6;
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.55;
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
 }
 
-/* ── Main ────────────────────────────────────────── */
-
-main {
-  flex: 1;
-  width: 100%;
-  max-width: 1000px;
-  margin: 0 auto;
-  padding: 3rem 2rem 4rem;
+h1,
+h2,
+h3 {
+  font-weight: 800;
+  line-height: 1.12;
+  letter-spacing: -0.015em;
+  margin: 0;
 }
 
 h1 {
-  font-size: 2rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  font-size: 34px;
 }
 
-.lede {
-  color: var(--muted);
-  margin-top: 0.25rem;
+h2 {
+  font-size: 22px;
+}
+
+a {
+  color: var(--color-accent);
+  text-underline-offset: 3px;
+}
+
+:focus {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--color-accent) 30%, transparent);
+}
+
+/* For the status column's header, which is a bare gutter on screen but still
+   needs to name itself to a screen reader. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* The uppercase micro-label that sits above every number and section in the
+   system. */
+.kicker {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-55);
+}
+
+/* ── Nav ─────────────────────────────────────────── */
+
+/* The rule under the bar runs the full width of the window; what sits on top of
+   it lines up with the page below. */
+.nav {
+  border-bottom: 2px solid var(--color-divider);
+}
+
+.nav-inner {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-4);
+  max-width: 1020px;
+  margin: 0 auto;
+  padding: 14px 24px;
+}
+
+.nav-brand {
+  font-weight: 800;
+  font-size: 18px;
+  letter-spacing: -0.02em;
+  color: inherit;
+  text-decoration: none;
+}
+
+.nav-note {
+  font-size: 12px;
+  color: var(--ink-55);
+}
+
+.nav-synced {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--ink-55);
+  white-space: nowrap;
+}
+
+/* The live pip: the same square the accent uses everywhere else, at 7px. */
+.nav-synced::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  background: var(--color-accent);
+  flex: none;
+}
+
+.nav-synced time {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Page frame ──────────────────────────────────── */
+
+main {
+  width: 100%;
+  max-width: 1020px;
+  margin: 0 auto;
+  padding: 0 0 64px;
 }
 
 .back {
-  font-size: 0.85rem;
-  margin-bottom: 0.75rem;
+  margin: 0;
+  padding: 12px 24px;
+  font-size: 12px;
+  border-bottom: 1px solid var(--color-divider);
 }
 
 .back a {
-  color: var(--muted);
+  color: var(--ink-55);
   text-decoration: none;
 }
 
 .back a:hover {
-  color: var(--text);
+  color: var(--color-accent);
 }
 
-.synced {
-  color: var(--muted);
-  margin-top: 0.5rem;
-  font-size: 0.8rem;
-}
-
-.synced time {
-  color: #aaa;
-  font-variant-numeric: tabular-nums;
-}
-
-/* ── Toolbar ─────────────────────────────────────── */
-
-.toolbar {
+.page-head {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  gap: 1rem;
-  margin: 2rem 0 1.5rem;
+  align-items: flex-end;
+  gap: 24px;
+  padding: 26px 24px 20px;
+  border-bottom: 2px solid var(--color-divider);
 }
 
-.toolbar input {
+.page-title {
   flex: 1;
-  min-width: 220px;
-  padding: 0.6rem 0.9rem;
-  font: inherit;
-  font-size: 0.9rem;
-  color: var(--text);
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 8px;
+  min-width: 260px;
 }
 
-.toolbar input::placeholder {
-  color: #666;
+.page-title h1 {
+  margin: 5px 0 0;
 }
 
-.toolbar input:focus {
-  outline: none;
-  border-color: #555;
+.lede {
+  margin: 8px 0 0;
+  max-width: 46ch;
+  font-size: 13.5px;
+  color: var(--ink-70);
 }
 
-.totals {
+/* ── Stats ───────────────────────────────────────── */
+
+.stats {
   display: flex;
-  gap: 1.25rem;
-  font-size: 0.85rem;
-  color: var(--muted);
+  align-items: flex-end;
 }
 
-.totals strong {
-  color: var(--text);
+.stat {
+  padding: 0 20px;
+  text-align: right;
+}
+
+.stat:first-child {
+  padding-left: 0;
+}
+
+.stat:last-child {
+  padding-right: 0;
+}
+
+.stat + .stat {
+  border-left: 1px solid var(--color-divider);
+}
+
+.stat-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-55);
+}
+
+.stat-value {
+  display: block;
+  margin-top: 4px;
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1;
   font-variant-numeric: tabular-nums;
 }
 
-.totals .down strong {
-  color: var(--down);
+.stat-value.down {
+  color: var(--color-accent);
 }
 
-.totals .unknown strong {
-  color: var(--unknown);
+.stat-value.unknown {
+  color: var(--color-neutral-700);
+}
+
+/* The "/ 14" half of "2 / 14": the denominator is context for the number, not
+   a number of its own. */
+.stat-of {
+  font-size: 17px;
+  color: var(--ink-45);
+}
+
+/* ── Filter ──────────────────────────────────────── */
+
+.filterbar {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-3);
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--color-divider);
+}
+
+.field {
+  width: 320px;
+  max-width: 100%;
+}
+
+.field label {
+  display: block;
+  font-size: 12px;
+  margin-bottom: 5px;
+  color: var(--ink-70);
+}
+
+.input {
+  width: 100%;
+  min-height: 36px;
+  padding: 6px 10px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--color-text);
+  caret-color: var(--color-accent);
+  background: var(--color-surface);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius);
+}
+
+.input::placeholder {
+  color: var(--ink-45);
+}
+
+.input:hover {
+  border-color: color-mix(in srgb, var(--color-text) 45%, transparent);
+}
+
+.input:focus-visible {
+  border-color: var(--color-accent);
+  outline-offset: 0;
+}
+
+.filter-count {
+  padding-bottom: 9px;
+  font-size: 12px;
+  color: var(--ink-55);
 }
 
 /* ── Notices ─────────────────────────────────────── */
 
 .notice {
-  color: var(--muted);
-  padding: 2rem 0;
+  margin: 0;
+  padding: 40px 24px;
+  font-size: 14px;
+  color: var(--ink-55);
 }
 
 .notice.error {
-  color: var(--down);
+  color: var(--color-accent-700);
+  font-weight: 600;
 }
 
-/* ── Stations ────────────────────────────────────── */
+/* ── Station blocks ──────────────────────────────── */
 
-.stations {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  /* Cards vary a lot in length; without this a two-lift station is stretched
-     to the height of a ten-lift neighbour. */
-  align-items: start;
-  gap: 1rem;
-}
-
-/* One card on its own page: the grid's column width would leave it stranded at
-   320px on a wide screen, but a full 1000px row of two-word lift names is no
-   better. */
-.station-single {
-  max-width: 520px;
-  margin-top: 2rem;
-}
-
-.station {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  overflow: hidden;
+/* One block per station, stacked: the lift table wants the full measure, and a
+   2px rule between blocks separates them better than a card outline would. */
+.station + .station {
+  border-top: 2px solid var(--color-divider);
 }
 
 .station-head {
   display: flex;
-  align-items: center;
   flex-wrap: wrap;
-  gap: 0.5rem;
-  padding: 0.9rem 1.1rem;
-  border-bottom: 1px solid var(--line);
-  background: var(--surface-2);
+  align-items: flex-end;
+  gap: var(--space-4) 24px;
+  padding: 20px 24px 14px;
 }
 
 .station-title {
-  display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 0.5rem;
+  flex: 1;
+  min-width: 200px;
 }
 
-.station-head h2 {
-  font-size: 1.05rem;
-  font-weight: 700;
-  letter-spacing: 0.01em;
-}
-
-.station-head h2 a {
+.station-title h2 a {
   color: inherit;
   text-decoration: none;
 }
 
-.station-head h2 a:hover {
-  text-decoration: underline;
-  text-underline-offset: 3px;
+.station-title h2 a:hover {
+  color: var(--color-accent);
 }
 
 .station-code {
-  font-size: 0.75rem;
+  display: block;
+  margin-top: 3px;
+  font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.06em;
-  color: var(--muted);
+  letter-spacing: 0.1em;
+  color: var(--ink-55);
 }
 
-.counts {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-  margin-left: auto;
+.station-foot {
+  margin: 0;
+  padding: 10px 24px 18px;
+  font-size: 12px;
+  color: var(--ink-55);
 }
 
-.badge {
-  font-size: 0.7rem;
+.station-foot-link {
+  color: inherit;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.station-foot-link:hover {
+  color: var(--color-accent);
+}
+
+/* ── Lift table ──────────────────────────────────── */
+
+/* Every station gets its own table, so the columns have to be pinned rather
+   than measured: left to itself a two-lift station puts "Perron" 250px left of
+   where the station above it did, and the page loses its grid. */
+.lift-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.lift-table th {
+  text-align: left;
+  font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.02em;
-  padding: 0.15rem 0.5rem;
-  border-radius: 999px;
-  border: 1px solid currentColor;
-  white-space: nowrap;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-text) 60%, transparent);
+  padding: var(--space-2);
+  border-bottom: 2px solid var(--color-divider);
 }
 
-.badge.down {
-  color: var(--down);
+.lift-table td {
+  padding: var(--space-2);
+  border-bottom: 1px solid var(--color-divider);
+  vertical-align: middle;
 }
 
-.badge.unknown {
-  color: var(--unknown);
+/* The mark column is a gutter, not a cell: it carries the status bar and the
+   table's outer padding, nothing else. */
+.col-mark {
+  width: 58px;
+  padding-left: 24px !important;
 }
 
-.badge.muted {
-  color: var(--muted);
+.col-status {
+  width: 34%;
+  padding-right: 24px !important;
 }
 
-/* ── Lifts ───────────────────────────────────────── */
-
-.lifts {
-  list-style: none;
+.mark {
+  display: block;
+  width: 10px;
+  height: 26px;
+  background: var(--color-neutral-900);
 }
 
-.lift {
-  display: flex;
-  align-items: baseline;
-  gap: 0.6rem;
-  padding: 0.65rem 1.1rem;
-  font-size: 0.875rem;
-  border-top: 1px solid #1c1c1c;
+/* Status is carried three ways at once — bar, row tint, and the word itself —
+   so it survives greyscale printing and colour-blind viewing. */
+.lift-row.down {
+  background: var(--color-accent-100);
 }
 
-.lift:first-child {
-  border-top: none;
+.lift-row.down .mark {
+  background: var(--color-accent);
 }
 
-.dot {
-  flex: none;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--muted);
-  transform: translateY(-1px);
+.lift-row.down .lift-status {
+  color: var(--color-accent-700);
+  font-weight: 800;
 }
 
-.lift.ok .dot {
-  background: var(--ok);
+/* Hatching rather than a third hue: "no reading" is an absence, and reads as
+   one next to two solid bars. */
+.lift-row.unknown .mark {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--color-neutral-400) 0 3px,
+    transparent 3px 6px
+  );
+  outline: 1px solid var(--color-neutral-200);
 }
 
-.lift.down .dot {
-  background: var(--down);
-}
-
-.lift.unknown .dot {
-  background: var(--unknown);
+.lift-row.unknown .lift-status {
+  color: var(--color-neutral-700);
+  font-weight: 600;
 }
 
 .lift-name {
-  font-weight: 500;
+  font-weight: 800;
 }
 
-.platform {
-  color: var(--muted);
-  font-size: 0.8rem;
-  white-space: nowrap;
+.lift-platform {
+  width: 15%;
+  font-variant-numeric: tabular-nums;
 }
 
-.lift-status {
-  margin-left: auto;
-  color: var(--muted);
-  font-size: 0.8rem;
-  text-align: right;
-}
-
-.lift.down .lift-status {
-  color: var(--down);
-}
-
-.lift.unknown .lift-status {
-  color: var(--unknown);
+.lift-platform.empty {
+  color: var(--ink-45);
 }
 
 /* ── Responsive ──────────────────────────────────── */
 
-@media (max-width: 768px) {
-  nav {
-    padding: 1rem;
-  }
-
-  main {
-    padding: 2rem 1rem 3rem;
-  }
-
+@media (max-width: 640px) {
   h1 {
-    font-size: 1.6rem;
+    font-size: 26px;
   }
 
-  .stations {
-    grid-template-columns: 1fr;
+  .nav-inner,
+  .back,
+  .page-head,
+  .filterbar,
+  .station-head,
+  .station-foot,
+  .notice {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+
+  /* The strapline is the first thing to go: the wordmark and the age of the
+     data are the two things the bar is actually for. */
+  .nav-inner {
+    flex-wrap: wrap;
+    gap: 4px 12px;
+  }
+
+  .nav-note {
+    display: none;
+  }
+
+  .stats {
+    width: 100%;
+  }
+
+  .stat {
+    flex: 1;
+    text-align: left;
+    padding-left: 14px;
+  }
+
+  .stat:first-child {
+    padding-left: 0;
+  }
+
+  .stat-value {
+    font-size: 24px;
+  }
+
+  .filterbar {
+    flex-wrap: wrap;
+  }
+
+  /* Four columns will not fit, so each row becomes its own small block: the
+     status bar keeps its gutter, the name takes the top line, and platform and
+     status share the line below it. */
+  .lift-table,
+  .lift-table tbody,
+  .lift-table tr,
+  .lift-table td {
+    display: block;
+  }
+
+  .lift-table thead {
+    display: none;
+  }
+
+  .lift-table tr {
+    display: grid;
+    /* minmax(0, 1fr) rather than 1fr: a long lift name has to be allowed to
+       wrap, or it sets the row's width and pushes the status off-screen. */
+    grid-template-columns: 10px minmax(0, 1fr) auto;
+    align-items: baseline;
+    gap: 3px 14px;
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--color-divider);
+  }
+
+  .lift-table td {
+    padding: 0;
+    border: 0;
+  }
+
+  .col-mark {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    align-self: stretch;
+    width: auto;
+    padding-left: 0 !important;
+  }
+
+  .mark {
+    height: 100%;
+    min-height: 26px;
+  }
+
+  .lift-name {
+    grid-column: 2 / span 2;
+    grid-row: 1;
+  }
+
+  .lift-platform {
+    grid-column: 2;
+    grid-row: 2;
+    width: auto;
+    font-size: 12px;
+    color: var(--ink-55);
+  }
+
+  /* A lone em dash under the name is noise once the column header is gone. */
+  .lift-platform.empty {
+    display: none;
+  }
+
+  .col-status {
+    grid-column: 3;
+    grid-row: 2;
+    width: auto;
+    padding-right: 0 !important;
+    font-size: 13px;
+    text-align: right;
   }
 }

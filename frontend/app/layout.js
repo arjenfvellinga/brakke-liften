@@ -1,5 +1,17 @@
+import { Archivo } from "next/font/google";
+
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/next";
+
+// The design system is set in Archivo throughout, at 400 for body copy and 800
+// for every heading, number and lift name. Self-hosted by next/font so there is
+// no request to Google on load.
+const archivo = Archivo({
+  subsets: ["latin"],
+  weight: ["400", "600", "800"],
+  variable: "--font-archivo",
+  display: "swap",
+});
 
 export const metadata = {
   title: "Brakke Liften",
@@ -8,7 +20,7 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="nl" className={archivo.variable}>
       <body>
         {children}
         <Analytics />

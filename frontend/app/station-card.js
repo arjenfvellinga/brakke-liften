@@ -13,7 +13,7 @@ function statusOf(open) {
 
 // Upstream names are all of the form "Lift 1", "Lift perron 2a", and some are
 // prefixed with the station code ("ASD Lift 1"). Both the code and the "Lift"
-// are already established by the card the name sits in, so neither carries
+// are already established by the table the name sits in, so neither carries
 // anything. Stripping the code first: it comes before the prefix.
 export function liftName(name, stationCode) {
   let stripped = name;
@@ -29,25 +29,8 @@ export function liftName(name, stationCode) {
   return stripped || name;
 }
 
-function words(value) {
-  return String(value)
-    .toLowerCase()
-    .split(/[^a-z0-9]+/)
-    .filter(Boolean);
-}
-
-// Plenty of names already spell the platform out ("Lift perron 2a"), and the
-// badge next to it would then say the same thing twice. Both sides are compared
-// per word: that keeps a platform "1" from being swallowed by a name mentioning
-// "12", while a platform written "10/11" still matches a name saying "10-11".
-function nameMentionsPlatform(name, platform) {
-  const found = words(name);
-  const needles = words(platform);
-  return needles.length > 0 && needles.every((word) => found.includes(word));
-}
-
 // Sorted on the *displayed* name, not the upstream one: the backend's ordering
-// is by the raw name, so a card mixing "Lift 2" with "ASD Lift 1" comes out in
+// is by the raw name, so a table mixing "Lift 2" with "ASD Lift 1" comes out in
 // an order the stripped names no longer explain. `numeric` so lift 10 follows
 // lift 9 instead of lift 1.
 function byName(a, b) {
@@ -58,14 +41,80 @@ function byName(a, b) {
   );
 }
 
+// The counts, in the label-over-number pairs the design system uses for every
+// figure. "Onbekend" is dropped when there is none: an emphatic zero would
+// draw the eye to the one column that has nothing to say.
+export function StationStats({ station }) {
+  return (
+    <div className="stats">
+      <div className="stat">
+        <span className="stat-label">Buiten dienst</span>
+        <span className="stat-value down">
+          {station.closedCount}
+          <span className="stat-of"> / {station.liftCount}</span>
+        </span>
+      </div>
+      {station.unknownCount > 0 && (
+        <div className="stat">
+          <span className="stat-label">Onbekend</span>
+          <span className="stat-value unknown">{station.unknownCount}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// The lifts themselves. Split out from the card because the station's own page
+// leads with its heading and counts already, and only wants the table.
+export function LiftTable({ station }) {
+  // Copied first — sort mutates, and the array belongs to the caller's state.
+  const lifts = [...station.lifts].sort(byName);
+
+  return (
+    <table className="lift-table">
+      <thead>
+        <tr>
+          <th className="col-mark">
+            <span className="sr-only">Status</span>
+          </th>
+          <th>Lift</th>
+          <th className="lift-platform">Perron</th>
+          <th className="col-status">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {lifts.map((lift) => {
+          const status = statusOf(lift.open);
+          return (
+            <tr className={`lift-row ${status.className}`} key={lift.id}>
+              <td className="col-mark">
+                {/* The bar repeats what the status column says in words; it is
+                    there so a row can be placed at a glance, not read. */}
+                <span className="mark" aria-hidden="true" />
+              </td>
+              <td className="lift-name">
+                {liftName(lift.name, lift.stationCode)}
+              </td>
+              <td className={`lift-platform${lift.platform ? "" : " empty"}`}>
+                {lift.platform || "—"}
+              </td>
+              <td className="col-status lift-status">
+                {lift.statusLabel || status.label}
+              </td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  );
+}
+
 // `linked` is off on the station's own page: the heading would link to the page
 // it is already on.
 export function StationCard({ station, linked = false }) {
   // No name known for this code: the code is the heading, so showing it again
-  // as a subtitle would just repeat it.
+  // underneath would just repeat it.
   const heading = station.stationName || station.stationCode;
-  // Copied first — sort mutates, and the array belongs to the caller's state.
-  const lifts = [...station.lifts].sort(byName);
 
   return (
     <section className="station">
@@ -82,43 +131,23 @@ export function StationCard({ station, linked = false }) {
             <span className="station-code">{station.stationCode}</span>
           )}
         </div>
-        <div className="counts">
-          {station.closedCount > 0 && (
-            <span className="badge down">
-              {station.closedCount} buiten dienst
-            </span>
-          )}
-          {station.unknownCount > 0 && (
-            <span className="badge unknown">
-              {station.unknownCount} onbekend
-            </span>
-          )}
-          <span className="badge muted">
-            {station.liftCount} {station.liftCount === 1 ? "lift" : "liften"}
-          </span>
-        </div>
+        <StationStats station={station} />
       </div>
 
-      <ul className="lifts">
-        {lifts.map((lift) => {
-          const status = statusOf(lift.open);
-          return (
-            <li className={`lift ${status.className}`} key={lift.id}>
-              <span className="dot" aria-hidden="true" />
-              <span className="lift-name">
-                {liftName(lift.name, lift.stationCode)}
-              </span>
-              {lift.platform &&
-                !nameMentionsPlatform(lift.name, lift.platform) && (
-                  <span className="platform">spoor {lift.platform}</span>
-                )}
-              <span className="lift-status">
-                {lift.statusLabel || status.label}
-              </span>
-            </li>
-          );
-        })}
-      </ul>
+      <LiftTable station={station} />
+
+      <p className="station-foot">
+        {station.liftCount} {station.liftCount === 1 ? "lift" : "liften"} op dit
+        station
+        {linked && (
+          <>
+            {" · "}
+            <Link className="station-foot-link" href={`/stations/${station.stationCode}`}>
+              Alleen dit station
+            </Link>
+          </>
+        )}
+      </p>
     </section>
   );
 }

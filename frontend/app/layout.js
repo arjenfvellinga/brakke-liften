@@ -15,7 +15,7 @@ const archivo = Archivo({
 
 export const metadata = {
   title: "Brakke Liften",
-  description: "NS-stations met brakke liften.",
+  description: "Een overzicht van treinstations met brakke liften.",
 };
 
 export default function RootLayout({ children }) {

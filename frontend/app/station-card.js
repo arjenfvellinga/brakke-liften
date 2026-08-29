@@ -41,10 +41,33 @@ function byName(a, b) {
   );
 }
 
+// Whether anything at this station is worth reporting — what the overview's
+// two lists are split on.
+export function isAffected(station) {
+  return station.closedCount + station.unknownCount > 0;
+}
+
 // The counts, in the label-over-number pairs the design system uses for every
 // figure. "Onbekend" is dropped when there is none: an emphatic zero would
 // draw the eye to the one column that has nothing to say.
 export function StationStats({ station }) {
+  // Nothing out of order: the one figure left is how many lifts are running,
+  // and it stays in the neutral ink — red means a problem everywhere else on
+  // the page, so a working station must not borrow it.
+  if (!isAffected(station)) {
+    return (
+      <div className="stats">
+        <div className="stat">
+          <span className="stat-label">In bedrijf</span>
+          <span className="stat-value">
+            {station.liftCount}
+            <span className="stat-of"> / {station.liftCount}</span>
+          </span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="stats">
       <div className="stat">

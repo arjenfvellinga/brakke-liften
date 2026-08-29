@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { BACKEND } from "./backend";
 import { SiteHeader } from "./site-header";
-import { StationCard, liftName } from "./station-card";
+import { StationCard } from "./station-card";
 
 export default function Home() {
   const [stations, setStations] = useState(null);
@@ -42,10 +42,7 @@ export default function Home() {
     return stations.filter(
       (station) =>
         station.stationCode.toLowerCase().includes(needle) ||
-        (station.stationName || "").toLowerCase().includes(needle) ||
-        station.lifts.some((lift) =>
-          liftName(lift.name, lift.stationCode).toLowerCase().includes(needle),
-        ),
+        (station.stationName || "").toLowerCase().includes(needle),
     );
   }, [stations, query]);
 
@@ -71,14 +68,14 @@ export default function Home() {
         <div className="page-head">
           <div className="page-search">
             <div className="field">
-              <label htmlFor="station-filter">Zoek een station of brakke lift</label>
+              <label htmlFor="station-filter">Zoek een station</label>
               <input
                 id="station-filter"
                 className="input"
                 type="search"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Utrecht, ASD, perron 5…"
+                placeholder="Utrecht, ASD…"
               />
             </div>
             {stations && query.trim() && (

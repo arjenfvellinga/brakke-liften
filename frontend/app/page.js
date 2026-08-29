@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-import { BACKEND, formatSynced } from "./backend";
+import { BACKEND } from "./backend";
+import { SiteHeader } from "./site-header";
 import { StationCard, liftName } from "./station-card";
 
 export default function Home() {
@@ -60,62 +61,65 @@ export default function Home() {
     [filtered],
   );
 
-  const synced = formatSynced(syncedAt);
-
   return (
-    <main>
-      <header>
-        <h1>Stations met brakke liften</h1>
-        <p className="lede">
-          Stations waar minstens één lift buiten dienst is of waarvan de status onbekend is.
-        </p>
-        {/* Null until the first sync has run; the NS data is only refreshed
-            once a day, so saying how old it is matters. */}
-        {synced && (
-          <p className="synced">
-            Bijgewerkt op <time dateTime={syncedAt}>{synced}</time>
+    <>
+      <SiteHeader syncedAt={syncedAt} />
+
+      <main>
+        <h1 className="sr-only">Een overzicht van brakke listen op treinstations in Nederland</h1>
+
+        <div className="page-head">
+          <div className="page-search">
+            <div className="field">
+              <label htmlFor="station-filter">Zoek een station of brakke lift</label>
+              <input
+                id="station-filter"
+                className="input"
+                type="search"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Utrecht, ASD, perron 5…"
+              />
+            </div>
+            {stations && query.trim() && (
+              <span className="filter-count">
+                {filtered.length} van {stations.length}
+              </span>
+            )}
+          </div>
+
+          {stations && (
+            <div className="stats">
+              <div className="stat">
+                <span className="stat-label">Stations</span>
+                <span className="stat-value">{filtered.length}</span>
+              </div>
+              <div className="stat">
+                <span className="stat-label">Buiten dienst</span>
+                <span className="stat-value down">{totals.closed}</span>
+              </div>
+              <div className="stat">
+                <span className="stat-label">Onbekend</span>
+                <span className="stat-value unknown">{totals.unknown}</span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {error && <p className="notice error">Laden mislukt: {error}</p>}
+        {!stations && !error && <p className="notice">Laden…</p>}
+        {stations && filtered.length === 0 && (
+          <p className="notice">
+            {stations.length === 0
+              ? "Geen enkel station heeft op dit moment een lift buiten dienst."
+              : "Geen station komt overeen met wat je zoekt."}
           </p>
         )}
-      </header>
 
-      {stations && (
-        <div className="toolbar">
-          <input
-            type="search"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Filter op station of liftnaam…"
-            aria-label="Filter stations"
-          />
-          <div className="totals">
-            <span>
-              <strong>{filtered.length}</strong> stations
-            </span>
-            <span className="down">
-              <strong>{totals.closed}</strong> liften buiten dienst
-            </span>
-            <span className="unknown">
-              <strong>{totals.unknown}</strong> onbekend
-            </span>
-          </div>
-        </div>
-      )}
-
-      {error && <p className="notice error">Laden mislukt: {error}</p>}
-      {!stations && !error && <p className="notice">Laden…</p>}
-      {stations && filtered.length === 0 && (
-        <p className="notice">
-          {stations.length === 0
-            ? "Geen station heeft op dit moment een lift buiten dienst."
-            : "Geen station komt overeen met dit filter."}
-        </p>
-      )}
-
-      <div className="stations">
         {filtered.map((station) => (
           <StationCard key={station.stationCode} station={station} linked />
         ))}
-      </div>
-    </main>
+      </main>
+    </>
   );
 }

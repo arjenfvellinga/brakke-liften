@@ -4,8 +4,9 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { BACKEND, formatSynced } from "../../backend";
-import { StationCard } from "../../station-card";
+import { BACKEND } from "../../backend";
+import { SiteHeader } from "../../site-header";
+import { LiftTable, StationStats } from "../../station-card";
 
 export default function StationPage() {
   // useParams rather than the `params` prop: that prop is a promise in the App
@@ -42,32 +43,41 @@ export default function StationPage() {
     };
   }, [stationCode]);
 
-  const synced = formatSynced(syncedAt);
-
   return (
-    <main>
-      <header>
+    <>
+      <SiteHeader syncedAt={syncedAt} />
+
+      <main>
         <p className="back">
           <Link href="/">← Alle stations</Link>
         </p>
-        {/* The card carries the resolved station name; until it arrives the code
-            from the URL is the only name there is. */}
-        <h1>{station?.stationName || String(stationCode).toUpperCase()}</h1>
-        {synced && (
-          <p className="synced">
-            Bijgewerkt op <time dateTime={syncedAt}>{synced}</time>
-          </p>
-        )}
-      </header>
 
-      {error && <p className="notice error">{error}</p>}
-      {!station && !error && <p className="notice">Laden…</p>}
-
-      {station && (
-        <div className="station-single">
-          <StationCard station={station} />
+        <div className="page-head">
+          <div className="page-title">
+            <p className="kicker">Station</p>
+            {/* The payload carries the resolved station name; until it arrives
+                the code from the URL is the only name there is. */}
+            <h1>{station?.stationName || String(stationCode).toUpperCase()}</h1>
+            {station?.stationName && (
+              <span className="station-code">{station.stationCode}</span>
+            )}
+          </div>
+          {station && <StationStats station={station} />}
         </div>
-      )}
-    </main>
+
+        {error && <p className="notice error">{error}</p>}
+        {!station && !error && <p className="notice">Laden…</p>}
+
+        {station && (
+          <>
+            <LiftTable station={station} />
+            <p className="station-foot">
+              {station.liftCount}{" "}
+              {station.liftCount === 1 ? "lift" : "liften"} op dit station
+            </p>
+          </>
+        )}
+      </main>
+    </>
   );
 }

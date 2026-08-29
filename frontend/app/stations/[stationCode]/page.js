@@ -49,7 +49,9 @@ export default function StationPage() {
 
       <main>
         <p className="back">
-          <Link href="/">← Alle stations</Link>
+          {/* Not "alle stations" any more: that is now one of two lists the
+              overview offers, and this link lands on whichever is selected. */}
+          <Link href="/">← Overzicht</Link>
         </p>
 
         <div className="page-head">

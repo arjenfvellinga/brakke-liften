@@ -90,22 +90,17 @@ def station_payload(station_code: str, station_lifts: list[Lift]) -> dict:
 
 @app.get("/svc/api/stations")
 async def get_stations(session: FreshSessionDep):
-    """Stations that have at least one lift not confirmed open.
+    """Every station that has lifts, each with all of its lifts.
 
-    A station is included when any of its lifts reports `No` or `Unknown`; the
-    station then carries *all* of its lifts, so the working ones next to a
-    broken one stay visible.
+    Deliberately unfiltered: the overview leads with the stations that have a
+    lift reporting `No` or `Unknown`, but it also has to be able to answer
+    "is the lift at my station working?", which needs the ones where nothing is
+    wrong — and needs them in the same detail, so that a station reads the same
+    whichever list it was found in.
     """
-    affected = (
-        select(Lift.station_code)
-        .where(Lift.open.in_((LiftOpen.NO, LiftOpen.UNKNOWN)))
-        .distinct()
-    )
     lifts = (
         await session.scalars(
-            select(Lift)
-            .where(Lift.station_code.in_(affected))
-            .order_by(Lift.station_code, Lift.name, Lift.id)
+            select(Lift).order_by(Lift.station_code, Lift.name, Lift.id)
         )
     ).all()
 
@@ -127,9 +122,8 @@ async def get_stations(session: FreshSessionDep):
 async def get_station(station_code: str, session: FreshSessionDep):
     """A single station with all of its lifts.
 
-    Unlike the list route this does not require the station to have a broken
-    lift: a station whose lifts have since been repaired should still answer on
-    its own URL rather than 404.
+    Its own URL, so a station that has since been repaired still answers here
+    rather than 404.
     """
     # Upstream codes are uppercase ("ASD"); a hand-typed or shared URL may not be.
     station_code = station_code.upper()

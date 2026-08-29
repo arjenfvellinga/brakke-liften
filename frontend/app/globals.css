@@ -314,8 +314,72 @@ main {
   outline-offset: 0;
 }
 
+/* ── Scope bar ───────────────────────────────────── */
+
+/* Its own band under the head rather than a third item beside the search and
+   the stats: at 1020px those three do not share a line, and which list you are
+   looking at deserves to sit directly above that list anyway. */
+.scope-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 12px 24px;
+  border-bottom: 2px solid var(--color-divider);
+}
+
+.scope {
+  display: flex;
+}
+
+.scope-option {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  padding: 7px 14px;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-70);
+  background: transparent;
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+/* Two squares sharing one hairline, not two buttons with a seam between them. */
+.scope-option + .scope-option {
+  margin-left: -1px;
+}
+
+.scope-option:hover {
+  color: var(--color-text);
+  background: var(--color-surface);
+}
+
+/* Selected is a flat ink block: the accent is spoken for by "buiten dienst",
+   and a red button here would read as a warning rather than a choice. */
+.scope-option.active {
+  position: relative;
+  color: var(--color-bg);
+  background: var(--color-text);
+  border-color: var(--color-text);
+}
+
+.scope-count {
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-45);
+}
+
+.scope-option.active .scope-count {
+  color: color-mix(in srgb, var(--color-bg) 65%, transparent);
+}
+
 .filter-count {
-  padding-bottom: 9px;
+  margin-left: auto;
   font-size: 12px;
   color: var(--ink-55);
 }
@@ -332,6 +396,19 @@ main {
 .notice.error {
   color: var(--color-accent-700);
   font-weight: 600;
+}
+
+/* A control that belongs inside a sentence, so it is a link in everything but
+   what it does. */
+.link-button {
+  padding: 0;
+  font: inherit;
+  color: var(--color-accent);
+  background: none;
+  border: 0;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
 }
 
 /* ── Station blocks ──────────────────────────────── */
@@ -492,6 +569,7 @@ main {
   .nav-inner,
   .back,
   .page-head,
+  .scope-bar,
   .station-head,
   .station-foot,
   .notice {

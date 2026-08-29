@@ -66,15 +66,26 @@ export default function Home() {
       <SiteHeader syncedAt={syncedAt} />
 
       <main>
+        <h1 className="sr-only">Een overzicht van brakke listen op treinstations in Nederland</h1>
+
         <div className="page-head">
-          <div className="page-title">
-            <p className="kicker">Overzicht</p>
-            <h1>Waar de lift het niet doet</h1>
-            <p className="lede">
-              Elk station hieronder heeft minstens één lift die buiten dienst is
-              of waarvan we de status niet krijgen. De werkende liften staan
-              erbij, zodat je ziet of er een alternatief is.
-            </p>
+          <div className="page-search">
+            <div className="field">
+              <label htmlFor="station-filter">Zoek een station of brakke lift</label>
+              <input
+                id="station-filter"
+                className="input"
+                type="search"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Utrecht, ASD, perron 5…"
+              />
+            </div>
+            {stations && query.trim() && (
+              <span className="filter-count">
+                {filtered.length} van {stations.length}
+              </span>
+            )}
           </div>
 
           {stations && (
@@ -94,27 +105,6 @@ export default function Home() {
             </div>
           )}
         </div>
-
-        {stations && stations.length > 0 && (
-          <div className="filterbar">
-            <div className="field">
-              <label htmlFor="station-filter">Zoek een station of lift</label>
-              <input
-                id="station-filter"
-                className="input"
-                type="search"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Utrecht, ASD, perron 5…"
-              />
-            </div>
-            {query.trim() && (
-              <span className="filter-count">
-                {filtered.length} van {stations.length}
-              </span>
-            )}
-          </div>
-        )}
 
         {error && <p className="notice error">Laden mislukt: {error}</p>}
         {!stations && !error && <p className="notice">Laden…</p>}

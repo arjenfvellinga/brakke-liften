@@ -14,7 +14,7 @@ export function SiteHeader({ syncedAt }) {
         <Link className="nav-brand" href="/">
           Brakke liften
         </Link>
-        <span className="nav-note">Liftstoringen op NS-stations</span>
+        <span className="nav-note">Liftstoringen op treinstations in Nederland</span>
         {synced && (
           <span className="nav-synced">
             Bijgewerkt <time dateTime={syncedAt}>{synced}</time>

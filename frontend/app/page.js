@@ -204,7 +204,7 @@ export default function Home() {
                 </button>
               </>
             ) : (
-              "Geen station komt overeen met wat je zoekt."
+              "Geen station komt overeen met wat je zoekt of heeft geen lift."
             )}
           </p>
         )}

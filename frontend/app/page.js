@@ -176,11 +176,6 @@ export default function Home() {
                 </button>
               ))}
             </div>
-            {needle && (
-              <span className="filter-count">
-                {filtered.length} van {scoped.length}
-              </span>
-            )}
           </div>
         )}
 

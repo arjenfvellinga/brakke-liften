@@ -133,7 +133,7 @@ export default function Home() {
               <div className="stat-group">
                 <div className="stats">
                   <div className="stat">
-                    <span className="stat-label">Stations</span>
+                    <span className="stat-label">Stations met lift</span>
                     <span className="stat-value">{filtered.length}</span>
                   </div>
                 </div>

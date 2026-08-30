@@ -224,6 +224,32 @@ main {
   align-items: flex-end;
 }
 
+/* Figures of two different kinds on one row — stations, then lifts. Bottom
+   aligned, so the labels and the numbers line up across the groups by
+   themselves and the heading over the lift pair simply sits above them. */
+.stat-groups {
+  display: flex;
+  align-items: flex-end;
+  gap: 36px;
+}
+
+.stat-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+/* Stretched over the whole group and underscored, so the heading is read as
+   covering both figures rather than as a label on the one it happens to sit
+   above — the same hairline the table headers use, doing the same job. */
+.stat-group-label {
+  align-self: stretch;
+  text-align: left;
+  padding-bottom: 5px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--color-divider);
+}
+
 .stat {
   padding: 0 20px;
   text-align: right;
@@ -586,6 +612,23 @@ main {
 
   .nav-note {
     display: none;
+  }
+
+  .stat-groups {
+    width: 100%;
+    gap: 14px;
+  }
+
+  /* Left aligned like everything else at this width, and the lift group gets
+     twice the row because it holds two of the three figures — otherwise the
+     lone station number claims half the width. */
+  .stat-group {
+    flex: 1;
+    align-items: flex-start;
+  }
+
+  .stat-group:last-child {
+    flex: 2;
   }
 
   .stats {

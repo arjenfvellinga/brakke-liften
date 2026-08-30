@@ -125,19 +125,34 @@ export default function Home() {
             </div>
           </div>
 
+          {/* Three figures in one row, but the first counts stations and the
+              other two count lifts. "Stations" names its own unit; the pair
+              that does not gets a heading over both of them. */}
           {stations && (
-            <div className="stats">
-              <div className="stat">
-                <span className="stat-label">Stations</span>
-                <span className="stat-value">{filtered.length}</span>
+            <div className="stat-groups">
+              <div className="stat-group">
+                <div className="stats">
+                  <div className="stat">
+                    <span className="stat-label">Stations</span>
+                    <span className="stat-value">{filtered.length}</span>
+                  </div>
+                </div>
               </div>
-              <div className="stat">
-                <span className="stat-label">Buiten dienst</span>
-                <span className="stat-value down">{totals.closed}</span>
-              </div>
-              <div className="stat">
-                <span className="stat-label">Onbekend</span>
-                <span className="stat-value unknown">{totals.unknown}</span>
+
+              {/* The heading only stands over these two visually, so the group
+                  has to say so out loud as well. */}
+              <div className="stat-group" role="group" aria-label="Liften">
+                <span className="kicker stat-group-label">Liften</span>
+                <div className="stats">
+                  <div className="stat">
+                    <span className="stat-label">Buiten dienst</span>
+                    <span className="stat-value down">{totals.closed}</span>
+                  </div>
+                  <div className="stat">
+                    <span className="stat-label">Onbekend</span>
+                    <span className="stat-value unknown">{totals.unknown}</span>
+                  </div>
+                </div>
               </div>
             </div>
           )}

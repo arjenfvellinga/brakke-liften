@@ -125,10 +125,28 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Three figures in one row, but the first counts stations and the
-              other two count lifts. "Stations" names its own unit; the pair
-              that does not gets a heading over both of them. */}
           {stations && (
+            <div className="scope" role="group" aria-label="Welke stations">
+              {SCOPES.map(({ id, label }) => (
+                <button
+                  key={id}
+                  type="button"
+                  className={`scope-option${scope === id ? " active" : ""}`}
+                  aria-pressed={scope === id}
+                  onClick={() => setScope(id)}
+                >
+                  {label}
+                  <span className="scope-count">
+                    {id === "all" ? sorted.length : affected.length}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {stations && (
+          <div className="stat-bar">
             <div className="stat-groups">
               {/* The heading only stands over these two visually, so the group
                   has to say so out loud as well. */}
@@ -145,27 +163,6 @@ export default function Home() {
                   </div>
                 </div>
               </div>
-            </div>
-          )}
-        </div>
-
-        {stations && (
-          <div className="scope-bar">
-            <div className="scope" role="group" aria-label="Welke stations">
-              {SCOPES.map(({ id, label }) => (
-                <button
-                  key={id}
-                  type="button"
-                  className={`scope-option${scope === id ? " active" : ""}`}
-                  aria-pressed={scope === id}
-                  onClick={() => setScope(id)}
-                >
-                  {label}
-                  <span className="scope-count">
-                    {id === "all" ? sorted.length : affected.length}
-                  </span>
-                </button>
-              ))}
             </div>
           </div>
         )}

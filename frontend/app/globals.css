@@ -208,7 +208,7 @@ main {
 }
 
 /* The overview has no title of its own — the search takes that side of the
-   head, opposite the stats. */
+   head, opposite the scope. */
 .page-search {
   display: flex;
   align-items: flex-end;
@@ -340,19 +340,22 @@ main {
   outline-offset: 0;
 }
 
-/* ── Scope bar ───────────────────────────────────── */
+/* ── Stat bar ────────────────────────────────────── */
 
 /* Its own band under the head rather than a third item beside the search and
-   the stats: at 1020px those three do not share a line, and which list you are
-   looking at deserves to sit directly above that list anyway. */
-.scope-bar {
+   the scope: at 1020px those three do not share a line, and the figures count
+   whatever the list below currently holds, so they belong against it. */
+.stat-bar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: flex-end;
   gap: var(--space-3);
   padding: 12px 24px;
   border-bottom: 2px solid var(--color-divider);
 }
+
+/* ── Scope ───────────────────────────────────────── */
 
 .scope {
   display: flex;
@@ -595,7 +598,7 @@ main {
   .nav-inner,
   .back,
   .page-head,
-  .scope-bar,
+  .stat-bar,
   .station-head,
   .station-foot,
   .notice {

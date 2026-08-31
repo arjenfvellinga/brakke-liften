@@ -4,9 +4,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-Vercel Services monorepo: a Next.js frontend and a FastAPI backend deployed as two
-independent services behind one domain. Currently the upstream Vercel starter
-template, unmodified apart from the repo name.
+Brakkeliften.nl — which lifts at Dutch train stations are out of service. A Vercel
+Services monorepo: a Next.js frontend and a FastAPI backend deployed as two
+independent services behind one domain.
+
+The backend pulls lift status from the NS Places API into a Postgres `lifts` table
+and serves it as station-shaped payloads. The frontend is two client-rendered
+screens over those: an overview (search, an "alle stations" / "met storing" scope
+toggle, one block per station) and a per-station page.
+
+Data freshness is the one piece of behaviour worth knowing up front. The Vercel
+cron only fires once a day on the free plan, so the lift routes top themselves up:
+`get_fresh_session` in `backend/main.py` calls `ns.sync_if_stale` on every request,
+and whichever request finds the data older than `ns.MAX_AGE` re-syncs it. The
+`syncedAt` the frontend shows in its header comes from that sync state, not from
+the request.
 
 ## Commands
 
@@ -47,15 +59,15 @@ must follow this or they will be unreachable in deployment. FastAPI's own docs
 land at `/svc/api/docs`.
 
 The frontend reaches the backend over the same public origin, not a service
-binding: `frontend/app/page.js` uses `process.env.NEXT_PUBLIC_BACKEND_URL` with
-`/svc/api` as the fallback, so requests go through the Vercel rewrite.
+binding: `frontend/app/backend.js` exports `BACKEND` from
+`process.env.NEXT_PUBLIC_BACKEND_URL` with `/svc/api` as the fallback, so requests
+go through the Vercel rewrite. Both pages fetch from it directly with
+`cache: "no-store"`.
 
-Two kinds of API route coexist and are easy to confuse:
-
-- `frontend/app/api/*/route.js` — Next.js route handlers, run on the frontend
-  service, reached at `/api/*`
-- `backend/main.py` — FastAPI, separate runtime and deploy unit, reached at
-  `/svc/api/*`
+All HTTP routes live in `backend/main.py`; the frontend has no route handlers of
+its own (no `frontend/app/api/`). If you add one, note that it runs on the
+frontend service at `/api/*` — a different runtime and deploy unit from the
+FastAPI routes at `/svc/api/*`, and easy to confuse with them.
 
 Frontend is Next.js App Router with plain JavaScript (no TypeScript) and a single
 global stylesheet, `frontend/app/globals.css`. Turbopack `root` is pinned to

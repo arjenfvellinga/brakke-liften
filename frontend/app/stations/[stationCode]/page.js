@@ -73,10 +73,6 @@ export default function StationPage() {
         {station && (
           <>
             <LiftTable station={station} />
-            <p className="station-foot">
-              {station.liftCount}{" "}
-              {station.liftCount === 1 ? "lift" : "liften"} op dit station
-            </p>
           </>
         )}
       </main>

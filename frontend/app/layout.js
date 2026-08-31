@@ -23,6 +23,15 @@ export default function RootLayout({ children }) {
     <html lang="nl" className={archivo.variable}>
       <body>
         {children}
+
+        {/* Every page ends on the same caveat: the lift statuses here are the
+            NS ones, and nothing more. */}
+        <footer className="site-foot">
+          <p className="site-foot-inner">
+            Brakkeliften.nl is afhankelijk van de NS voor de liftgegevens en de
+            juistheid ervan.
+          </p>
+        </footer>
         <Analytics />
       </body>
     </html>

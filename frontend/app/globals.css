@@ -44,6 +44,8 @@
   box-sizing: border-box;
 }
 
+/* Column so the disclaimer at the end of the document is held against the
+   bottom of the window on a page too short to fill it. */
 body {
   margin: 0;
   background: var(--color-bg);
@@ -52,6 +54,8 @@ body {
   font-size: 15px;
   line-height: 1.55;
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 h1,
@@ -171,6 +175,23 @@ main {
   max-width: 1020px;
   margin: 0 auto;
   padding: 0 0 64px;
+  flex: 1;
+}
+
+/* ── Site foot ───────────────────────────────────── */
+
+/* The mirror of the nav: the rule runs the full width of the window, the line
+   on it lines up with the page above. */
+.site-foot {
+  border-top: 2px solid var(--color-divider);
+}
+
+.site-foot-inner {
+  max-width: 1020px;
+  margin: 0 auto;
+  padding: 16px 24px 20px;
+  font-size: 12px;
+  color: var(--ink-55);
 }
 
 .back {
@@ -601,6 +622,7 @@ main {
   .stat-bar,
   .station-head,
   .station-foot,
+  .site-foot-inner,
   .notice {
     padding-left: 18px;
     padding-right: 18px;

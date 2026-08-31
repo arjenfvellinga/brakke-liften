@@ -47,7 +47,7 @@ export default function StationPage() {
     <>
       <SiteHeader syncedAt={syncedAt} />
 
-      <main>
+      <main id="main" aria-busy={!station && !error}>
         <p className="back">
           {/* Not "alle stations" any more: that is now one of two lists the
               overview offers, and this link lands on whichever is selected. */}
@@ -67,8 +67,16 @@ export default function StationPage() {
           {station && <StationStats station={station} />}
         </div>
 
-        {error && <p className="notice error">{error}</p>}
-        {!station && !error && <p className="notice">Laden…</p>}
+        {error && (
+          <p className="notice error" role="alert">
+            {error}
+          </p>
+        )}
+        {!station && !error && (
+          <p className="notice" role="status">
+            Laden…
+          </p>
+        )}
 
         {station && (
           <>

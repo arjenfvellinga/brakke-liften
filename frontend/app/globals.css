@@ -1,5 +1,9 @@
 /* Modernist: flat surfaces, square corners, hairline rules, one red accent.
-   Tokens below are the design system's; everything under them is this app. */
+   Tokens below are the design system's; everything under them is this app.
+
+   Colour and type here are held to WCAG 2.2 AA: every text token clears 4.5:1
+   on the surface it sits on, control borders and the focus ring clear 3:1, and
+   all sizes are in rem so they follow the reader's own font setting. */
 
 :root {
   --color-bg: #f3f2f2;
@@ -8,17 +12,16 @@
   --color-accent: #ec3013;
   --color-divider: color-mix(in srgb, #201e1d 40%, transparent);
 
-  --color-neutral-100: #f8f4f4;
-  --color-neutral-200: #eae7e7;
   --color-neutral-400: #bab6b6;
   --color-neutral-500: #9b9797;
   --color-neutral-700: #605d5d;
-  --color-neutral-800: #444141;
   --color-neutral-900: #2d2b2b;
 
   --color-accent-100: #fff2ef;
+
+  /* The accent at 3.76:1 on the ground is a large-text and non-text colour
+     only. Anything accent-coloured at body size uses the 700 instead (6.4:1). */
   --color-accent-700: #ae1800;
-  --color-accent-800: #7c1405;
 
   /* Archivo, loaded by next/font in layout.js. */
   --font-body: var(--font-archivo), system-ui, sans-serif;
@@ -32,10 +35,14 @@
   --radius: 0px;
 
   /* Muted text, as a mix rather than a flat grey, so it stays keyed to the ink
-     colour above. */
-  --ink-70: color-mix(in srgb, var(--color-text) 70%, transparent);
-  --ink-55: color-mix(in srgb, var(--color-text) 55%, transparent);
-  --ink-45: color-mix(in srgb, var(--color-text) 45%, transparent);
+     colour above. Both clear 4.5:1 on --color-bg and on --color-surface. */
+  --ink-strong: color-mix(in srgb, var(--color-text) 70%, transparent); /* 5.8:1 */
+  --ink-muted: color-mix(in srgb, var(--color-text) 65%, transparent); /* 5.0:1 */
+
+  /* A control's own edge is what tells you it is a control, so it needs 3:1 of
+     its own. The decorative section rules carry no meaning and keep the
+     lighter --color-divider. */
+  --color-border-control: color-mix(in srgb, var(--color-text) 50%, transparent);
 }
 
 *,
@@ -51,7 +58,7 @@ body {
   background: var(--color-bg);
   color: var(--color-text);
   font-family: var(--font-body);
-  font-size: 15px;
+  font-size: 0.9375rem;
   line-height: 1.55;
   min-height: 100vh;
   display: flex;
@@ -68,19 +75,21 @@ h3 {
 }
 
 h1 {
-  font-size: 34px;
+  font-size: 2.125rem;
 }
 
 h2 {
-  font-size: 22px;
+  font-size: 1.375rem;
 }
 
 a {
-  color: var(--color-accent);
+  color: var(--color-accent-700);
   text-underline-offset: 3px;
 }
 
-:focus {
+/* Scoped to the pointer case rather than blanket: a browser that never matches
+   :focus-visible would otherwise leave keyboard focus with no indicator at all. */
+:focus:not(:focus-visible) {
   outline: none;
 }
 
@@ -104,15 +113,38 @@ a {
   white-space: nowrap;
 }
 
+/* ── Skip link ───────────────────────────────────── */
+
+/* The first tab stop on every page: off-screen until focused, then the same
+   flat ink block the selected scope button uses. Revealed on :focus rather
+   than :focus-visible — a skip link that stays hidden is no skip link. */
+.skip-link {
+  position: absolute;
+  top: 0;
+  left: -9999px;
+  z-index: 10;
+  padding: 10px 18px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-bg);
+  background: var(--color-text);
+  text-decoration: none;
+}
+
+.skip-link:focus {
+  left: 0;
+  outline-offset: -4px;
+}
+
 /* The uppercase micro-label that sits above every number and section in the
    system. */
 .kicker {
   margin: 0;
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--ink-55);
+  color: var(--ink-muted);
 }
 
 /* ── Nav ─────────────────────────────────────────── */
@@ -134,15 +166,20 @@ a {
 
 .nav-brand {
   font-weight: 800;
-  font-size: 24px;
+  font-size: 1.5rem;
   letter-spacing: -0.02em;
   color: inherit;
   text-decoration: none;
 }
 
+.nav-brand:hover,
+.nav-brand:focus-visible {
+  color: var(--color-accent-700);
+}
+
 .nav-note {
-  font-size: 12px;
-  color: var(--ink-55);
+  font-size: 0.75rem;
+  color: var(--ink-muted);
 }
 
 .nav-synced {
@@ -150,8 +187,8 @@ a {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 12px;
-  color: var(--ink-55);
+  font-size: 0.75rem;
+  color: var(--ink-muted);
   white-space: nowrap;
 }
 
@@ -190,24 +227,25 @@ main {
   max-width: 1020px;
   margin: 0 auto;
   padding: 16px 24px 20px;
-  font-size: 12px;
-  color: var(--ink-55);
+  font-size: 0.75rem;
+  color: var(--ink-muted);
 }
 
 .back {
   margin: 0;
   padding: 12px 24px;
-  font-size: 12px;
+  font-size: 0.75rem;
   border-bottom: 1px solid var(--color-divider);
 }
 
 .back a {
-  color: var(--ink-55);
+  color: var(--ink-muted);
   text-decoration: none;
 }
 
-.back a:hover {
-  color: var(--color-accent);
+.back a:hover,
+.back a:focus-visible {
+  color: var(--color-accent-700);
 }
 
 .page-head {
@@ -240,7 +278,10 @@ main {
 
 /* ── Stats ───────────────────────────────────────── */
 
+/* A definition list, so each number is programmatically tied to the label
+   above it rather than only by sitting under it. */
 .stats {
+  margin: 0;
   display: flex;
   align-items: flex-end;
 }
@@ -290,22 +331,24 @@ main {
 
 .stat-label {
   display: block;
-  font-size: 10px;
+  font-size: 0.625rem;
   font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--ink-55);
+  color: var(--ink-muted);
 }
 
 .stat-value {
   display: block;
-  margin-top: 4px;
-  font-size: 30px;
+  margin: 4px 0 0;
+  font-size: 1.875rem;
   font-weight: 800;
   line-height: 1;
   font-variant-numeric: tabular-nums;
 }
 
+/* At 30px/800 this is large-scale text, where 3:1 is the bar — so the figure
+   that matters most keeps the full accent. */
 .stat-value.down {
   color: var(--color-accent);
 }
@@ -317,8 +360,8 @@ main {
 /* The "/ 14" half of "2 / 14": the denominator is context for the number, not
    a number of its own. */
 .stat-of {
-  font-size: 17px;
-  color: var(--ink-45);
+  font-size: 1.0625rem;
+  color: var(--ink-muted);
 }
 
 /* ── Filter ──────────────────────────────────────── */
@@ -330,30 +373,30 @@ main {
 
 .field label {
   display: block;
-  font-size: 12px;
+  font-size: 0.75rem;
   margin-bottom: 5px;
-  color: var(--ink-70);
+  color: var(--ink-strong);
 }
 
 .input {
   width: 100%;
-  min-height: 36px;
+  min-height: 44px;
   padding: 6px 10px;
   font: inherit;
-  font-size: 14px;
+  font-size: 0.875rem;
   color: var(--color-text);
   caret-color: var(--color-accent);
   background: var(--color-surface);
-  border: 1px solid var(--color-divider);
+  border: 1px solid var(--color-border-control);
   border-radius: var(--radius);
 }
 
 .input::placeholder {
-  color: var(--ink-45);
+  color: var(--ink-muted);
 }
 
 .input:hover {
-  border-color: color-mix(in srgb, var(--color-text) 45%, transparent);
+  border-color: var(--ink-strong);
 }
 
 .input:focus-visible {
@@ -384,17 +427,21 @@ main {
 
 .scope-option {
   display: inline-flex;
-  align-items: baseline;
+  /* The 44px target is taller than the text; centre it rather than letting
+     baseline alignment strand the label at the top of the button. */
+  align-items: center;
+  justify-content: center;
   gap: var(--space-2);
+  min-height: 44px;
   padding: 7px 14px;
   font: inherit;
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--ink-70);
+  color: var(--ink-strong);
   background: transparent;
-  border: 1px solid var(--color-divider);
+  border: 1px solid var(--color-border-control);
   border-radius: var(--radius);
   cursor: pointer;
 }
@@ -404,7 +451,8 @@ main {
   margin-left: -1px;
 }
 
-.scope-option:hover {
+.scope-option:hover,
+.scope-option:focus-visible {
   color: var(--color-text);
   background: var(--color-surface);
 }
@@ -418,20 +466,20 @@ main {
   border-color: var(--color-text);
 }
 
+.scope-option.active:hover,
+.scope-option.active:focus-visible {
+  color: var(--color-bg);
+  background: var(--color-text);
+}
+
 .scope-count {
   font-weight: 800;
   font-variant-numeric: tabular-nums;
-  color: var(--ink-45);
+  color: var(--ink-muted);
 }
 
 .scope-option.active .scope-count {
   color: color-mix(in srgb, var(--color-bg) 65%, transparent);
-}
-
-.filter-count {
-  margin-left: auto;
-  font-size: 12px;
-  color: var(--ink-55);
 }
 
 /* ── Notices ─────────────────────────────────────── */
@@ -439,8 +487,8 @@ main {
 .notice {
   margin: 0;
   padding: 40px 24px;
-  font-size: 14px;
-  color: var(--ink-55);
+  font-size: 0.875rem;
+  color: var(--ink-muted);
 }
 
 .notice.error {
@@ -453,7 +501,7 @@ main {
 .link-button {
   padding: 0;
   font: inherit;
-  color: var(--color-accent);
+  color: var(--color-accent-700);
   background: none;
   border: 0;
   text-decoration: underline;
@@ -487,24 +535,25 @@ main {
   text-decoration: none;
 }
 
-.station-title h2 a:hover {
-  color: var(--color-accent);
+.station-title h2 a:hover,
+.station-title h2 a:focus-visible {
+  color: var(--color-accent-700);
 }
 
 .station-code {
   display: block;
   margin-top: 3px;
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 600;
   letter-spacing: 0.1em;
-  color: var(--ink-55);
+  color: var(--ink-muted);
 }
 
 .station-foot {
   margin: 0;
   padding: 10px 24px 18px;
-  font-size: 12px;
-  color: var(--ink-55);
+  font-size: 0.75rem;
+  color: var(--ink-muted);
 }
 
 .station-foot-link {
@@ -513,8 +562,9 @@ main {
   text-decoration: none;
 }
 
-.station-foot-link:hover {
-  color: var(--color-accent);
+.station-foot-link:hover,
+.station-foot-link:focus-visible {
+  color: var(--color-accent-700);
 }
 
 /* ── Lift table ──────────────────────────────────── */
@@ -526,16 +576,16 @@ main {
   width: 100%;
   table-layout: fixed;
   border-collapse: collapse;
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .lift-table th {
   text-align: left;
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: color-mix(in srgb, var(--color-text) 60%, transparent);
+  color: var(--ink-muted);
   padding: var(--space-2);
   border-bottom: 2px solid var(--color-divider);
 }
@@ -581,14 +631,15 @@ main {
 }
 
 /* Hatching rather than a third hue: "no reading" is an absence, and reads as
-   one next to two solid bars. */
+   one next to two solid bars. Dark enough to actually register — at the old
+   neutral-400 on neutral-200 the bar was very nearly invisible. */
 .lift-row.unknown .mark {
   background: repeating-linear-gradient(
     45deg,
-    var(--color-neutral-400) 0 3px,
+    var(--color-neutral-500) 0 3px,
     transparent 3px 6px
   );
-  outline: 1px solid var(--color-neutral-200);
+  outline: 1px solid var(--color-neutral-400);
 }
 
 .lift-row.unknown .lift-status {
@@ -606,14 +657,14 @@ main {
 }
 
 .lift-platform.empty {
-  color: var(--ink-45);
+  color: var(--ink-muted);
 }
 
 /* ── Responsive ──────────────────────────────────── */
 
 @media (max-width: 640px) {
   h1 {
-    font-size: 26px;
+    font-size: 1.625rem;
   }
 
   .nav-inner,
@@ -671,7 +722,7 @@ main {
   }
 
   .stat-value {
-    font-size: 24px;
+    font-size: 1.5rem;
   }
 
   .page-search {
@@ -681,7 +732,8 @@ main {
 
   /* Four columns will not fit, so each row becomes its own small block: the
      status bar keeps its gutter, the name takes the top line, and platform and
-     status share the line below it. */
+     status share the line below it. Current Chrome, Gecko and WebKit all keep
+     a table's roles through this, so the markup needs no ARIA to compensate. */
   .lift-table,
   .lift-table tbody,
   .lift-table tr,
@@ -689,8 +741,14 @@ main {
     display: block;
   }
 
+  /* Hidden, not removed: display:none would take the column headers out of the
+     accessibility tree with them, leaving four unlabelled values per row. */
   .lift-table thead {
-    display: none;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
   }
 
   .lift-table tr {
@@ -731,12 +789,13 @@ main {
     grid-column: 2;
     grid-row: 2;
     width: auto;
-    font-size: 12px;
-    color: var(--ink-55);
+    font-size: 0.75rem;
+    color: var(--ink-muted);
   }
 
-  /* A lone em dash under the name is noise once the column header is gone. */
-  .lift-platform.empty {
+  /* A lone em dash under the name is noise once the column header is gone —
+     but the cell itself stays, so the row keeps all four of them. */
+  .lift-platform.empty span {
     display: none;
   }
 
@@ -745,7 +804,7 @@ main {
     grid-row: 2;
     width: auto;
     padding-right: 0 !important;
-    font-size: 13px;
+    font-size: 0.8125rem;
     text-align: right;
   }
 }

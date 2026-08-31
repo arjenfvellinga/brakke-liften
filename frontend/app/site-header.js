@@ -40,10 +40,13 @@ export function SiteHeader({ syncedAt }) {
         {age && (
           <span className="nav-synced">
             Bijgewerkt{" "}
-            {/* The exact moment is still one hover away, and still machine
-                readable, for anyone the duration does not satisfy. */}
+            {/* The exact moment is machine readable, one hover away, and — since
+                a <time> is not focusable and a title reaches neither keyboard
+                nor touch — also read out, for anyone the duration alone does
+                not satisfy. */}
             <time dateTime={syncedAt} title={formatSynced(syncedAt)}>
               {age}
+              <span className="sr-only"> ({formatSynced(syncedAt)})</span>
             </time>
           </span>
         )}

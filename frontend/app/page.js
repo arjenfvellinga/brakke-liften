@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { BACKEND } from "./backend";
 import { SiteHeader } from "./site-header";
@@ -40,6 +40,10 @@ export default function Home() {
   const [error, setError] = useState(null);
   const [query, setQuery] = useState("");
   const [scope, setScope] = useState(SCOPES[0].id);
+
+  // Where focus goes when the notice offering "alle stations" removes itself by
+  // being taken up on.
+  const allScopeRef = useRef(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -107,13 +111,13 @@ export default function Home() {
     <>
       <SiteHeader syncedAt={syncedAt} />
 
-      <main>
+      <main id="main" aria-busy={!stations && !error}>
         <h1 className="sr-only">Een overzicht van brakke liften op treinstations in Nederland</h1>
 
         <div className="page-head">
-          <div className="page-search">
+          <div className="page-search" role="search">
             <div className="field">
-              <label htmlFor="station-filter">Zoek een station</label>
+              <label htmlFor="station-filter">Zoek een station met lift</label>
               <input
                 id="station-filter"
                 className="input"
@@ -130,6 +134,7 @@ export default function Home() {
               {SCOPES.map(({ id, label }) => (
                 <button
                   key={id}
+                  ref={id === "all" ? allScopeRef : undefined}
                   type="button"
                   className={`scope-option${scope === id ? " active" : ""}`}
                   aria-pressed={scope === id}
@@ -149,28 +154,48 @@ export default function Home() {
           <div className="stat-bar">
             <div className="stat-groups">
               {/* The heading only stands over these two visually, so the group
-                  has to say so out loud as well. */}
-              <div className="stat-group" role="group" aria-label="Liften">
-                <span className="kicker stat-group-label">Liften</span>
-                <div className="stats">
+                  has to say so out loud as well — by pointing at the label
+                  itself, rather than repeating its text in an aria-label and
+                  having it announced twice. */}
+              <div className="stat-group" role="group" aria-labelledby="stat-group-lifts">
+                <span className="kicker stat-group-label" id="stat-group-lifts">
+                  Liften
+                </span>
+                <dl className="stats">
                   <div className="stat">
-                    <span className="stat-label">Buiten dienst</span>
-                    <span className="stat-value down">{totals.closed}</span>
+                    <dt className="stat-label">Buiten dienst</dt>
+                    <dd className="stat-value down">{totals.closed}</dd>
                   </div>
                   <div className="stat">
-                    <span className="stat-label">Onbekend</span>
-                    <span className="stat-value unknown">{totals.unknown}</span>
+                    <dt className="stat-label">Onbekend</dt>
+                    <dd className="stat-value unknown">{totals.unknown}</dd>
                   </div>
-                </div>
+                </dl>
               </div>
             </div>
           </div>
         )}
 
-        {error && <p className="notice error">Laden mislukt: {error}</p>}
-        {!stations && !error && <p className="notice">Laden…</p>}
+        {/* Mounted unconditionally: a live region that appears at the same
+            moment as its first message is not announced by most screen readers,
+            and this one has to carry every silent change the search makes to
+            the list below. */}
+        <p className="sr-only" role="status">
+          {stations ? `${filtered.length} stations gevonden` : ""}
+        </p>
+
+        {error && (
+          <p className="notice error" role="alert">
+            Laden mislukt: {error}
+          </p>
+        )}
+        {!stations && !error && (
+          <p className="notice" role="status">
+            Laden…
+          </p>
+        )}
         {stations && filtered.length === 0 && (
-          <p className="notice">
+          <p className="notice" role="status">
             {sorted.length === 0 ? (
               "Er zijn nog geen liftgegevens."
             ) : scoped.length === 0 ? (
@@ -181,7 +206,12 @@ export default function Home() {
                 <button
                   type="button"
                   className="link-button"
-                  onClick={() => setScope("all")}
+                  onClick={() => {
+                    setScope("all");
+                    // This notice is about to unmount itself, and with it the
+                    // button being clicked; without this, focus falls to <body>.
+                    allScopeRef.current?.focus();
+                  }}
                 >
                   Zoek in alle stations ({elsewhere})
                 </button>

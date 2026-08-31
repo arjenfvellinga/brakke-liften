@@ -50,59 +50,78 @@ export function isAffected(station) {
 // The counts, in the label-over-number pairs the design system uses for every
 // figure. "Onbekend" is dropped when there is none: an emphatic zero would
 // draw the eye to the one column that has nothing to say.
+//
+// A <dl> rather than spans: the pairing is the whole point of the component, so
+// it has to hold up when the layout that expresses it visually is gone.
 export function StationStats({ station }) {
   // Nothing out of order: the one figure left is how many lifts are running,
   // and it stays in the neutral ink — red means a problem everywhere else on
   // the page, so a working station must not borrow it.
   if (!isAffected(station)) {
     return (
-      <div className="stats">
+      <dl className="stats">
         <div className="stat">
-          <span className="stat-label">In bedrijf</span>
-          <span className="stat-value">
+          <dt className="stat-label">In bedrijf</dt>
+          <dd className="stat-value">
             {station.liftCount}
             <span className="stat-of"> / {station.liftCount}</span>
-          </span>
+          </dd>
         </div>
-      </div>
+      </dl>
     );
   }
 
   return (
-    <div className="stats">
+    <dl className="stats">
       <div className="stat">
-        <span className="stat-label">Buiten dienst</span>
-        <span className="stat-value down">
+        <dt className="stat-label">Buiten dienst</dt>
+        <dd className="stat-value down">
           {station.closedCount}
           <span className="stat-of"> / {station.liftCount}</span>
-        </span>
+        </dd>
       </div>
       {station.unknownCount > 0 && (
         <div className="stat">
-          <span className="stat-label">Onbekend</span>
-          <span className="stat-value unknown">{station.unknownCount}</span>
+          <dt className="stat-label">Onbekend</dt>
+          <dd className="stat-value unknown">{station.unknownCount}</dd>
         </div>
       )}
-    </div>
+    </dl>
   );
 }
 
 // The lifts themselves. Split out from the card because the station's own page
 // leads with its heading and counts already, and only wants the table.
+//
+// Under 640px the stylesheet lays each row out as a block, which used to cost a
+// table its roles in the accessibility tree. Chrome, Gecko and WebKit all keep
+// them now, so no ARIA is restated here — but see the note on `thead` in the
+// responsive block, which is a live problem rather than a historical one.
 export function LiftTable({ station }) {
   // Copied first — sort mutates, and the array belongs to the caller's state.
   const lifts = [...station.lifts].sort(byName);
 
   return (
     <table className="lift-table">
+      {/* The overview stacks one of these per station, so a table with no name
+          of its own is indistinguishable from the twenty above it. */}
+      <caption className="sr-only">
+        Liften op {station.stationName || station.stationCode}
+      </caption>
       <thead>
         <tr>
-          <th className="col-mark">
-            <span className="sr-only">Status</span>
+          <th className="col-mark" scope="col">
+            {/* Not "Status": that is the last column's name, and two columns
+                answering to it makes both ambiguous. */}
+            <span className="sr-only">Statusmarkering</span>
           </th>
-          <th>Lift</th>
-          <th className="lift-platform">Perron</th>
-          <th className="col-status">Status</th>
+          <th scope="col">Lift</th>
+          <th className="lift-platform" scope="col">
+            Perron
+          </th>
+          <th className="col-status" scope="col">
+            Status
+          </th>
         </tr>
       </thead>
       <tbody>
@@ -119,7 +138,11 @@ export function LiftTable({ station }) {
                 {liftName(lift.name, lift.stationCode)}
               </td>
               <td className={`lift-platform${lift.platform ? "" : " empty"}`}>
-                {lift.platform || "—"}
+                {/* The placeholder is punctuation, not a value: kept out of the
+                    reading order, and hidden outright once the narrow layout
+                    drops the column header that gave it its sense. The cell
+                    itself stays, so every row keeps all four. */}
+                {lift.platform || <span aria-hidden="true">—</span>}
               </td>
               <td className="col-status lift-status">
                 {lift.statusLabel || status.label}
@@ -138,12 +161,15 @@ export function StationCard({ station, linked = false }) {
   // No name known for this code: the code is the heading, so showing it again
   // underneath would just repeat it.
   const heading = station.stationName || station.stationCode;
+  const headingId = `station-${station.stationCode}`;
 
   return (
-    <section className="station">
+    // Named after its own heading, so the list of stations is navigable as a
+    // list of regions rather than one undifferentiated run of sections.
+    <section className="station" aria-labelledby={headingId}>
       <div className="station-head">
         <div className="station-title">
-          <h2>
+          <h2 id={headingId}>
             {linked ? (
               <Link href={`/stations/${station.stationCode}`}>{heading}</Link>
             ) : (
@@ -159,16 +185,20 @@ export function StationCard({ station, linked = false }) {
 
       <LiftTable station={station} />
 
-      <p className="station-foot">
-        {linked && (
-          <>
-            {" · "}
-            <Link className="station-foot-link" href={`/stations/${station.stationCode}`}>
-              Alleen dit station
-            </Link>
-          </>
-        )}
-      </p>
+      {linked && (
+        <p className="station-foot">
+          <Link
+            className="station-foot-link"
+            href={`/stations/${station.stationCode}`}
+          >
+            {/* Appended rather than an aria-label: the visible text has to stay
+                part of the accessible name, and "Alleen dit station" on its own
+                says nothing when it is the twentieth one in the list. */}
+            Alleen dit station
+            <span className="sr-only">: {heading}</span>
+          </Link>
+        </p>
+      )}
     </section>
   );
 }

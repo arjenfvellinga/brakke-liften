@@ -130,15 +130,6 @@ export default function Home() {
               that does not gets a heading over both of them. */}
           {stations && (
             <div className="stat-groups">
-              <div className="stat-group">
-                <div className="stats">
-                  <div className="stat">
-                    <span className="stat-label">Stations met lift</span>
-                    <span className="stat-value">{filtered.length}</span>
-                  </div>
-                </div>
-              </div>
-
               {/* The heading only stands over these two visually, so the group
                   has to say so out loud as well. */}
               <div className="stat-group" role="group" aria-label="Liften">

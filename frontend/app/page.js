@@ -113,7 +113,7 @@ export default function Home() {
         <div className="page-head">
           <div className="page-search">
             <div className="field">
-              <label htmlFor="station-filter">Zoek een station</label>
+              <label htmlFor="station-filter">Zoek een station met lift</label>
               <input
                 id="station-filter"
                 className="input"

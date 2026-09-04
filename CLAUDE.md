@@ -97,6 +97,20 @@ deliberately diverges from it in the places where the system fails AA. Do not
   below 3:1 and must not be used on a control.
 - **Every `font-size` is rem**, so text follows the reader's browser setting.
   Padding, gaps and widths stay in px; the layout grid is deliberate.
+- **The one exception is the `@media (max-width: 18em)` block at the foot of
+  `globals.css`**, which stacks the scope toggle. `em` in a media query is the
+  reader's *default font size*, so that query keys off text size rather than
+  window width — a 375px phone is 23em at 100% text and 11.7em at 200%. It is
+  there because a px breakpoint cannot tell those two apart, and the toggle only
+  stops fitting in the second. `.scope` also keeps a `flex-wrap: wrap` backstop
+  for zoom modes that scale text without moving the query with it.
+- **Nothing may set the page's width from an unbreakable word.** Station names
+  (`'s-Hertogenbosch`) and upstream lift names (`Westzijde/rechtbankzijde`) have
+  no break opportunity and are wider than a phone at 200% text, so the headings
+  carry `overflow-wrap: break-word` and `.lift-name` carries
+  `overflow-wrap: anywhere` — `anywhere` there specifically, because only it also
+  lowers the cell's min-content, which is the floor the row's grid track refuses
+  to shrink past. Same reason `.nav-inner` and `.nav-synced` both wrap.
 - **Interactive targets are 44px** (`.input`, `.scope-option`).
 - Every hover-only colour change needs a `:focus-visible` twin.
 
@@ -138,3 +152,20 @@ Use `locator.ariaSnapshot()` to inspect the accessibility tree directly — it i
 the only way to catch the `thead` and cell-count regressions above, which axe
 cannot see. Note that hand-rolled contrast maths must composite `color-mix()`
 alpha; axe's own `color-contrast` node data is the reliable source.
+
+Text scaling (SC 1.4.4) is likewise invisible to axe, and it has already broken
+this layout three times, so check it by measurement:
+`documentElement.scrollWidth > clientWidth` must be false at every width. Note
+that the two ways of simulating it are not equivalent, and both are worth a run:
+
+- `firefox.launch({firefoxUserPrefs: {'font.size.variable.x-western': 32}})`
+  is the real thing — it moves the `em` media query as a browser text-size
+  setting does, so it is the only way to exercise the stacked toggle.
+- `page.addStyleTag({content: 'html{font-size:32px}'})` scales every rem but
+  leaves media-query `em` at 16px, which is what the `flex-wrap` backstop is
+  for. Inject it *after* `goto`, or the navigation discards it.
+
+When something overflows, no element's own rect need be past the edge: an
+unbreakable word spills out of a box that itself fits, and clipped `.sr-only`
+text is a false positive. Walk down from `body` following whichever child still
+has `scrollWidth > clientWidth`, which lands on the element that sets the width.

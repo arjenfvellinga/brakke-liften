@@ -145,11 +145,17 @@ async def get_station(station_code: str, session: FreshSessionDep):
 
 @app.get("/svc/api/lifts/{lift_id}")
 async def get_lift(lift_id: str, session: FreshSessionDep):
+    """A single lift with all of its fields.
+
+    `syncedAt` like the station routes: the lift has its own page, and the age
+    of the data is the one thing every page of this site has to be able to state
+    for itself.
+    """
     lift = await session.get(Lift, lift_id)
     if lift is None:
         raise HTTPException(status_code=404, detail="Lift not found")
 
-    return {"lift": lift.as_dict()}
+    return {"lift": lift.as_dict(), "syncedAt": await synced_at(session)}
 
 
 def authorize_cron(authorization: str | None) -> None:

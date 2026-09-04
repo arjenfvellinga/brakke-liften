@@ -11,6 +11,29 @@ function statusOf(open) {
   return STATUS[open] || { label: open, className: "unknown" };
 }
 
+// A lift's own page, under the station it belongs to: the station code is the
+// one readable part of the URL — the id is the upstream one
+// ("NL:CHB:LiftEquipment:8400280_001") — and having it there is also what lets
+// the page title and its way back out be right before the fetch resolves.
+export function liftHref(lift) {
+  return `/stations/${lift.stationCode}/lifts/${encodeURIComponent(lift.id)}`;
+}
+
+// The inverse, and not optional: useParams hands back the raw path segment, so
+// the colons the id is full of are still percent-encoded. Encoding that again
+// for the API call sends `%253A` and gets a 404 for a lift that exists.
+//
+// Written to be idempotent rather than assuming the encoding: a segment that
+// arrives already decoded has nothing to decode, and the catch covers an id
+// holding a literal `%`, which would make decodeURIComponent throw.
+export function liftIdFromParam(segment) {
+  try {
+    return decodeURIComponent(String(segment));
+  } catch {
+    return String(segment);
+  }
+}
+
 // Upstream names are all of the form "Lift 1", "Lift perron 2a", and some are
 // prefixed with the station code ("ASD Lift 1"). Both the code and the "Lift"
 // are already established by the table the name sits in, so neither carries
@@ -135,7 +158,21 @@ export function LiftTable({ station }) {
                 <span className="mark" aria-hidden="true" />
               </td>
               <td className="lift-name">
-                {liftName(lift.name, lift.stationCode)}
+                {/* Underlined rather than only recoloured on hover: at body
+                    size the accent would have to be the 700, which turns every
+                    name red, and a bold word that is a link only while the
+                    pointer is on it is no link at all to anyone else. */}
+                <Link href={liftHref(lift)}>
+                  {liftName(lift.name, lift.stationCode)}
+                  {/* The displayed names are "1", "2", "perron 2a" — unique
+                      within a station and meaningless outside it, and the
+                      overview stacks twenty of these tables. Appended so the
+                      visible text stays part of the accessible name. */}
+                  <span className="sr-only">
+                    {" "}
+                    op {station.stationName || station.stationCode}
+                  </span>
+                </Link>
               </td>
               <td className={`lift-platform${lift.platform ? "" : " empty"}`}>
                 {/* The placeholder is punctuation, not a value: kept out of the
@@ -152,6 +189,58 @@ export function LiftTable({ station }) {
         })}
       </tbody>
     </table>
+  );
+}
+
+// One lift, on its own page. The table's four columns have nothing to line up
+// against here, so the same values become label-over-value pairs — the form the
+// system already uses for every figure — and a <dl>, so each value stays tied
+// to its label when the band wraps.
+//
+// Status is still carried more than one way: the bar, the word, and the weight.
+// The row tint is dropped rather than blown up to a whole band, which would put
+// every muted label on this page over a second surface to be checked.
+export function LiftDetail({ lift }) {
+  const status = statusOf(lift.open);
+
+  return (
+    <dl className="lift-detail">
+      <div className="detail">
+        <dt className="kicker">Status</dt>
+        <dd className={`detail-value ${status.className}`}>
+          <span className="mark" aria-hidden="true" />
+          {lift.statusLabel || status.label}
+        </dd>
+      </div>
+
+      <div className="detail">
+        <dt className="kicker">Perron</dt>
+        <dd className="detail-value">
+          {/* The same em dash the table uses, and hidden the same way: it is
+              punctuation, not a value. But a <dd> holding only that is a value
+              most screen readers pass over in silence, which leaves "Perron"
+              paired with nothing at all — so the absence is stated in words
+              that only they get. */}
+          {lift.platform || (
+            <>
+              <span className="detail-empty" aria-hidden="true">
+                —
+              </span>
+              <span className="sr-only">Niet opgegeven</span>
+            </>
+          )}
+        </dd>
+      </div>
+
+      <div className="detail">
+        <dt className="kicker">Station</dt>
+        <dd className="detail-value">
+          <Link href={`/stations/${lift.stationCode}`}>
+            {lift.stationName || lift.stationCode}
+          </Link>
+        </dd>
+      </div>
+    </dl>
   );
 }
 

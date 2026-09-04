@@ -553,6 +553,25 @@ main {
   color: var(--ink-muted);
 }
 
+/* The upstream lift id, under the lift's name — the counterpart of the station
+   code under a station name, and the same muted micro-label. Not letter-spaced
+   like that one: 0.1em suits a two-letter code and turns 32 characters into a
+   sprawl.
+
+   Colons are not break opportunities, so the id is a single unbreakable word,
+   and a long one — wider than a phone at 200% text. `anywhere` rather than
+   `break-word` because it also lowers the min-content of the flex item it sits
+   in, which is the floor .page-title would otherwise refuse to shrink past. */
+.lift-id {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-muted);
+  overflow-wrap: anywhere;
+}
+
 .station-foot {
   margin: 0;
   padding: 10px 24px 18px;
@@ -625,7 +644,11 @@ main {
   background: var(--color-accent-100);
 }
 
-.lift-row.down .mark {
+/* Listed with the row rather than restated under .lift-detail: the bar means
+   the same thing in both places, and the hatch below is not worth writing
+   twice. */
+.lift-row.down .mark,
+.detail-value.down .mark {
   background: var(--color-accent);
 }
 
@@ -637,7 +660,8 @@ main {
 /* Hatching rather than a third hue: "no reading" is an absence, and reads as
    one next to two solid bars. Dark enough to actually register — at the old
    neutral-400 on neutral-200 the bar was very nearly invisible. */
-.lift-row.unknown .mark {
+.lift-row.unknown .mark,
+.detail-value.unknown .mark {
   background: repeating-linear-gradient(
     45deg,
     var(--color-neutral-500) 0 3px,
@@ -655,12 +679,95 @@ main {
   font-weight: 800;
 }
 
+/* The name is the link to the lift's own page. It keeps the ink rather than
+   taking the accent-700 every other body-size link uses: twenty tables of red
+   names would read as twenty tables of warnings. That leaves the underline as
+   the only thing marking it as a link, which is why it is there at rest and not
+   just on hover — a colour change alone would fail 1.4.1 anyway.
+
+   display:block so the whole cell is the target. That still leaves it a line
+   box short of the 24px of SC 2.5.8, which the spacing exception covers: the
+   rows are ~35px apart and there is no second target in one, so no two 24px
+   circles centred on these can meet. */
+.lift-name a {
+  display: block;
+  color: inherit;
+  text-decoration: underline;
+  /* Pinned to a hairline: left to itself the underline scales with the 800
+     weight, and a column of ten of them reads as a stack of rules. */
+  text-decoration-thickness: 1px;
+}
+
+.lift-name a:hover,
+.lift-name a:focus-visible {
+  color: var(--color-accent-700);
+}
+
 .lift-platform {
   width: 15%;
   font-variant-numeric: tabular-nums;
 }
 
 .lift-platform.empty {
+  color: var(--ink-muted);
+}
+
+/* ── Lift detail ─────────────────────────────────── */
+
+/* The band under the head on a single lift's page, in place of the table. Its
+   own 2px rule, like every other band, so the page still reads as bands. */
+.lift-detail {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  padding: 20px 24px 24px;
+  border-bottom: 2px solid var(--color-divider);
+}
+
+.detail {
+  padding: 0 24px;
+  /* Enough that "Buiten dienst" keeps its line; past that the band wraps rather
+     than squeezing the words. */
+  min-width: 170px;
+}
+
+.detail:first-child {
+  padding-left: 0;
+}
+
+.detail + .detail {
+  border-left: 1px solid var(--color-divider);
+}
+
+/* Not .stat-value: at 30px that is a figure, and a status in words at that size
+   is a headline. This is the one step up from body size that the table's own
+   values do not get. */
+.detail-value {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 6px 0 0;
+  font-size: 1.0625rem;
+  font-weight: 800;
+  /* Station names ("'s-Hertogenbosch") have no break opportunity and are wider
+     than a phone at 200% text. */
+  overflow-wrap: anywhere;
+}
+
+/* Body size, so the word takes the 700 (6.4:1) while the bar next to it — a
+   non-text mark, held to 3:1 — keeps the full accent. */
+.detail-value.down {
+  color: var(--color-accent-700);
+}
+
+.detail-value.unknown {
+  color: var(--color-neutral-700);
+}
+
+/* An absent platform is not a value, so it does not take the value's weight. */
+.detail-empty {
+  font-weight: 400;
+  font-size: 0.875rem;
   color: var(--ink-muted);
 }
 
@@ -678,9 +785,27 @@ main {
   .station-head,
   .station-foot,
   .site-foot-inner,
+  .lift-detail,
   .notice {
     padding-left: 18px;
     padding-right: 18px;
+  }
+
+  /* Two of these do not fit beside each other at this width, and a flex-wrapped
+     pair would leave the divider on the left of an item that now starts a line
+     — so they stack outright and the rule moves above them. */
+  .detail {
+    width: 100%;
+    min-width: 0;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .detail + .detail {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-left: 0;
+    border-top: 1px solid var(--color-divider);
   }
 
   /* The strapline is the first thing to go: the wordmark and the age of the

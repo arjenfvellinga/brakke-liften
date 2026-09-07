@@ -876,13 +876,17 @@ main {
    being asked about — and because the columns are fractions of the row, no text
    size can overflow this at any width.
 
-   The 2px gap is load-bearing. It keeps every block adjacent to the ground it is
-   held to 3:1 against rather than to its neighbour (SC 1.4.11). Do not close it
-   up. */
+   The 2px column gap is load-bearing. It keeps every block adjacent to the
+   ground it is held to 3:1 against rather than to its neighbour (SC 1.4.11). Do
+   not close it up.
+
+   The row gap is wider for a plainer reason: a day out of service fills its
+   row's full 24px, so at 2px it butts into the blocks on the line above and the
+   two rows read as one shape. */
 .daystrip {
   display: grid;
   grid-template-columns: repeat(30, minmax(0, 1fr));
-  gap: 2px;
+  gap: 8px 2px;
   margin: 0;
   padding: 0;
   list-style: none;

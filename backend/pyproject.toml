@@ -8,6 +8,10 @@ dependencies = [
   "httpx>=0.28.1",
   "psycopg[binary]>=3.3.4",
   "sqlalchemy[asyncio]>=2.0.52",
+  # zoneinfo is stdlib, but it falls back to the system tz database: a runtime
+  # without /usr/share/zoneinfo raises ZoneInfoNotFoundError inside the cron,
+  # which is where the Amsterdam calendar day is decided.
+  "tzdata>=2025.2",
   "uvicorn>=0.38.0",
 ]
 

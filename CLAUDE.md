@@ -20,6 +20,17 @@ and whichever request finds the data older than `ns.MAX_AGE` re-syncs it. The
 `syncedAt` the frontend shows in its header comes from that sync state, not from
 the request.
 
+Long-term history is the exception to that, and the distinction matters. The
+daily cron is the **only** writer of the `lift_day` table — one row per lift per
+day — and `ns.sync_lifts` must never record: it runs on demand, many times on a
+busy day and once on a quiet one, and a history whose resolution depends on
+traffic is not a history. `backend/history.py` owns that table and derives the
+per-lift figures from it on read rather than keeping a rollup, because a rollup
+written at cron time would still claim "in bedrijf" the next morning for a lift
+that broke overnight. Recording also refuses data older than
+`history.MAX_RECORD_AGE`, since `sync_if_stale` swallows a failed fetch — without
+that guard an NS outage would be written into permanent history as working lifts.
+
 ## Commands
 
 Run the whole stack (both services, with the `vercel.json` rewrites applied) from

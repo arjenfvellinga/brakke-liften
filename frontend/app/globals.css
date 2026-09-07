@@ -771,6 +771,281 @@ main {
   color: var(--ink-muted);
 }
 
+/* A second value under the status: how long this lift has been out right now.
+   Its own <dd> rather than a line inside the value above it — a <dt> may have
+   more than one <dd>, and "Buiten dienst" and "sinds 18 oktober" are two
+   answers to "Status", not one long one. The margin is reset because a <dd> is
+   indented by the UA stylesheet. */
+.detail-note {
+  margin: 4px 0 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--ink-strong);
+}
+
+/* ── Statistics bands ────────────────────────────── */
+
+/* The band the lift page's statistics sections sit in: the same padding and 2px
+   rule .page-head and .lift-detail already carry, named once so four sections
+   do not each restate it. */
+.band {
+  padding: 22px 24px 26px;
+  border-bottom: 2px solid var(--color-divider);
+}
+
+/* A section's heading and the caveat that belongs to it, kept together so the
+   gap down to the figures is set in one place. */
+.band-head {
+  margin-bottom: 20px;
+}
+
+/* A band that is nothing but its heading and a sentence — the "not enough
+   history yet" states — has no figures to leave room for. */
+.band-head:last-child {
+  margin-bottom: 0;
+}
+
+/* The honesty line under a heading: what the figures are measured over, and
+   what once-a-day measuring cannot see. --ink-strong rather than --ink-muted;
+   it is a caveat on the numbers, not a footnote to them. */
+.band-note {
+  margin: 8px 0 0;
+  max-width: 62ch;
+  font-size: 0.8125rem;
+  color: var(--ink-strong);
+}
+
+/* In a band the figures are a wrapping panel rather than one line in a bar, so
+   the hairline dividers come off: a divider on the left of a figure that has
+   just wrapped to a new line points at nothing, which is the same problem
+   .detail solved by stacking outright. Gap does the separating instead, and a
+   wrapped .stat is only ever as wide as its own longest word — which is what
+   stops this band setting the page width at 200% text on a desktop, where the
+   640px query cannot help because the window has not moved. */
+.band .stats,
+.band .stat-groups {
+  flex-wrap: wrap;
+}
+
+.band .stats {
+  gap: 16px 30px;
+}
+
+.band .stat-groups {
+  gap: 22px 36px;
+}
+
+/* Left aligned, unlike the overview's: there the figures are the right-hand end
+   of a bar, here they sit under a left-aligned heading, and a right-aligned
+   column under a left-aligned h2 reads as two unrelated things. */
+.band .stat {
+  padding: 0;
+  text-align: left;
+}
+
+.band .stat + .stat {
+  border-left: 0;
+}
+
+.band .stat-group {
+  flex: 1 1 auto;
+  align-items: flex-start;
+}
+
+/* How much of the window was actually measured, stated once per window rather
+   than once per figure: as a .stat-of on each number it was both repetitive and
+   the widest thing in the band. */
+.stat-group-note {
+  align-self: stretch;
+  margin: 10px 0 0;
+  text-align: left;
+  font-size: 0.6875rem;
+  color: var(--ink-muted);
+}
+
+/* ── Dagstrip ────────────────────────────────────── */
+
+/* One block per day, oldest first. A grid rather than a wrapping flex row, and
+   the column counts are all divisors of 90: a wrap left to itself puts 88 blocks
+   on one line and the last two on the next, and two stray blocks under a full
+   row read as a bug rather than as the end of the strip. On a divisor every row
+   is full and the last one ends the month it ends on.
+
+   The breakpoints are px, unlike the one at the foot of this file: a block here
+   is sized by the grid and not by the text, so window width really is the thing
+   being asked about — and because the columns are fractions of the row, no text
+   size can overflow this at any width.
+
+   The 2px gap is load-bearing. It keeps every block adjacent to the ground it is
+   held to 3:1 against rather than to its neighbour (SC 1.4.11). Do not close it
+   up. */
+.daystrip {
+  display: grid;
+  grid-template-columns: repeat(30, minmax(0, 1fr));
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 520px) {
+  .daystrip {
+    grid-template-columns: repeat(45, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 900px) {
+  .daystrip {
+    grid-template-columns: repeat(90, minmax(0, 1fr));
+  }
+}
+
+/* The coloured block is the ::before, not the <li>: the <li> keeps one height
+   for every state, so a wrapped line does not change height with whatever
+   happens to land in it, and the <li>'s only real content stays the .sr-only
+   day label. */
+.day {
+  display: flex;
+  align-items: flex-end;
+  flex: none;
+  height: 24px;
+}
+
+.day::before {
+  content: "";
+  display: block;
+  width: 100%;
+}
+
+/* State is carried twice over, as everywhere else on this site: by colour and by
+   height, so a working day is a short block in greyscale too. The accent and the
+   ink clear 3:1 and 12:1 against the ground but are only ~3.3:1 apart from each
+   other, which is not enough to read at 9px. The three fills are the ones .mark
+   already uses; "niet gemeten" is a bare outline, because no reading at all
+   reads as an absence — the same reason the hatch was picked for "onbekend". */
+.day-up::before {
+  height: 11px;
+  background: var(--color-neutral-900);
+}
+
+.day-down::before {
+  height: 24px;
+  background: var(--color-accent);
+}
+
+/* A tighter period than .mark's 6px: nine pixels of width only fits two stripes
+   at that pitch, and two stripes read as a smudge. */
+.day-unknown::before {
+  height: 24px;
+  background: repeating-linear-gradient(
+    45deg,
+    var(--color-neutral-500) 0 2px,
+    transparent 2px 4px
+  );
+  outline: 1px solid var(--color-neutral-400);
+}
+
+.day-none::before {
+  height: 11px;
+  outline: 1px solid var(--color-border-control);
+}
+
+/* Forced-colours mode overrides background-color, which would leave the strip as
+   four blocks of one colour with only their heights to tell them apart. A chart
+   is the case forced-color-adjust exists for. */
+@media (forced-colors: active) {
+  .day::before {
+    forced-color-adjust: none;
+  }
+}
+
+/* Wholly aria-hidden in the markup: this maps a visual encoding onto words, and
+   every day in the strip already carries those words in its own accessible
+   name. The swatches are the same .day classes the strip uses, so the key cannot
+   drift from the thing it is a key to. */
+.daystrip-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.75rem;
+  color: var(--ink-strong);
+}
+
+.daystrip-legend li {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+/* The swatches are the same .day classes the strip uses, so they cannot drift
+   from the thing they are a key to — but they sit outside the grid that gives
+   those their width, so they need one of their own. */
+.daystrip-legend .day {
+  width: 9px;
+}
+
+/* Where the strip starts and how much of it is not measured yet. Visible rather
+   than only .sr-only: the outlined blocks need explaining to everyone. */
+.daystrip-foot {
+  margin: 14px 0 0;
+  font-size: 0.75rem;
+  color: var(--ink-muted);
+}
+
+/* ── Storingstabel ───────────────────────────────── */
+
+/* Rides on .lift-table for the type, the hairlines, the hidden thead and the
+   narrow block layout; only the columns are its own. table-layout stays fixed —
+   three pinned columns, so a long NS status text wraps in its own cell instead
+   of taking the width off the two dates.
+
+   The edge cells lose their padding rather than gaining the 24px gutter
+   .col-mark carries on the station page: this table sits inside a .band, so the
+   band's own padding is the gutter and the first column has to start where the
+   h2 above it does. */
+.outage-table th:first-child,
+.outage-table td:first-child {
+  padding-left: 0;
+}
+
+.outage-table th:last-child,
+.outage-table td:last-child {
+  padding-right: 0;
+}
+
+.col-start {
+  width: 32%;
+}
+
+.col-days {
+  width: 24%;
+}
+
+/* NS status texts are free-form upstream and have no guaranteed break
+   opportunity, so this is the .lift-name problem in a fixed column. */
+.col-reason {
+  overflow-wrap: anywhere;
+}
+
+.outage-days {
+  font-variant-numeric: tabular-nums;
+}
+
+/* The one outage that has not ended yet: the same tint the overview's rows use
+   for a lift that is out now — and the words "loopt nog" in the cell beside it,
+   so the row is not marked by colour alone. */
+.outage-row.open {
+  background: var(--color-accent-100);
+}
+
+.outage-open {
+  color: var(--color-accent-700);
+  font-weight: 800;
+}
+
 /* ── Responsive ──────────────────────────────────── */
 
 @media (max-width: 640px) {
@@ -786,6 +1061,7 @@ main {
   .station-foot,
   .site-foot-inner,
   .lift-detail,
+  .band,
   .notice {
     padding-left: 18px;
     padding-right: 18px;
@@ -832,7 +1108,11 @@ main {
     align-items: flex-start;
   }
 
-  .stat-group:last-child {
+  /* Scoped to the overview's bar: the lift page has two of these in a .band and
+     does not want the second one at double width. Inside .stat-bar there is
+     exactly one group, where flex:1 and flex:2 are the same thing, so this
+     changes nothing there. */
+  .stat-bar .stat-group:last-child {
     flex: 2;
   }
 
@@ -936,6 +1216,37 @@ main {
     padding-right: 0 !important;
     font-size: 0.8125rem;
     text-align: right;
+  }
+
+  /* Three columns will not fit either, so an outage row becomes the same kind of
+     two-line block as the lift rows above: the date and the duration share the
+     first line, the NS text takes the second. No horizontal padding — the band
+     already provides it, and .lift-table tr's own 18px would double it. */
+  .outage-table tr {
+    grid-template-columns: minmax(0, 1fr) auto;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .col-start {
+    grid-column: 1;
+    grid-row: 1;
+    width: auto;
+    font-weight: 800;
+  }
+
+  .col-days {
+    grid-column: 2;
+    grid-row: 1;
+    width: auto;
+    text-align: right;
+  }
+
+  .col-reason {
+    grid-column: 1 / span 2;
+    grid-row: 2;
+    font-size: 0.8125rem;
+    color: var(--ink-strong);
   }
 }
 

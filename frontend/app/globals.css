@@ -974,9 +974,15 @@ main {
   color: var(--ink-strong);
 }
 
+/* baseline, not flex-end: the swatch is an empty box, so its synthesised
+   baseline is its bottom edge — which puts the label's baseline exactly on the
+   ground line the blocks stand on. flex-end only bottom-aligns the label's
+   *line box*, and the half-leading under the baseline then floats the letters
+   5px above that line. Descenders dipping below it are how type sits on a
+   baseline, and are the point rather than a side effect. */
 .daystrip-legend li {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   gap: 7px;
 }
 

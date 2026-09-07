@@ -251,7 +251,7 @@ export function LiftStats({ lift, history }) {
   // time — the cron fires at a fixed UTC hour, which is a different Dutch hour
   // in summer than in winter, and naming one of them is wrong half the year.
   const cadence =
-    "De actuele status van een lift is nooit ouder dan 15 minuten. Statistieken worden echter per dag in de avond berekend. Een storing die binnen een dag is opgelost, zien we niet.";
+    "De actuele status van een lift is nooit ouder dan 15 minuten. Statistieken worden echter per dag in de avond berekend. Een storing die binnen een dag is opgelost, komen niet terug in de dagstatistieken.";
 
   return (
     <>

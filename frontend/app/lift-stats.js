@@ -342,7 +342,7 @@ export function LiftStats({ lift, history }) {
                   outages.length >= 10
                     ? "De tien meest recente storingen"
                     : "Elke storing die we zagen"
-                }, nieuwste eerst. De melding is de statustekst die de NS er die dag bij gaf; die zegt niet altijd wat er aan de hand was.`}
+                }, nieuwste eerst.`}
           </p>
         </div>
 
@@ -422,8 +422,7 @@ export function LiftStats({ lift, history }) {
           <div className="band-head">
             <h2 id="stats-days">Dag voor dag</h2>
             <p className="band-note">
-              Eén blok per dag, de oudste links. Een hoog blok is een dag buiten
-              dienst.
+              Eén blok per dag, de oudste links.
             </p>
           </div>
 

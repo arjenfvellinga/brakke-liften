@@ -17,6 +17,27 @@ export function formatSynced(iso) {
   });
 }
 
+// The history carries date-only values ("2026-09-08"), because every
+// measurement in it is a whole day. `new Date()` reads a bare date as UTC
+// midnight, which renders as the day before for any reader in a zone behind
+// Greenwich, so the time is pinned to local midnight instead — a figure about a
+// day has to name the day it means.
+//
+// The year is off by default and asked for where a date could be a year old (an
+// outage row, "gemeten sinds"). Not in the day-by-day strip, which is ninety of
+// these and states its range once.
+export function formatDate(date, { year = false } = {}) {
+  if (!date) return null;
+  const stamp = new Date(`${date}T00:00:00`);
+  if (Number.isNaN(stamp.getTime())) return null;
+
+  return stamp.toLocaleDateString("nl-NL", {
+    day: "numeric",
+    month: "long",
+    ...(year ? { year: "numeric" } : {}),
+  });
+}
+
 // `numeric: "always"` so this says "1 dag geleden" rather than "gisteren": the
 // whole point of the line is how stale the data is, and "gisteren" is a date
 // where the reader wants a duration.

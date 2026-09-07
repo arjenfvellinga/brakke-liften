@@ -5,8 +5,15 @@ from typing import Annotated
 
 from db import get_session
 from fastapi import Depends, FastAPI, Header, HTTPException
+from history import (
+    day_summary,
+    fetch_history,
+    record_day,
+    summarize,
+    today_in_amsterdam,
+)
 from models import Lift, LiftOpen, SyncState
-from ns import sync_if_stale, sync_lifts
+from ns import sync_if_stale
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -145,7 +152,13 @@ async def get_station(station_code: str, session: FreshSessionDep):
 
 @app.get("/svc/api/lifts/{lift_id}")
 async def get_lift(lift_id: str, session: FreshSessionDep):
-    """A single lift with all of its fields.
+    """A single lift, its current state, and its long-term history.
+
+    The history rides along on this response rather than getting its own route:
+    the lift page needs both on first paint, and a second request would pay a
+    second cold start and a second staleness check for about a kilobyte of JSON.
+    It stays out of `lift` itself, which mirrors the upstream Places API record
+    field for field and has to keep doing so.
 
     `syncedAt` like the station routes: the lift has its own page, and the age
     of the data is the one thing every page of this site has to be able to state
@@ -155,7 +168,16 @@ async def get_lift(lift_id: str, session: FreshSessionDep):
     if lift is None:
         raise HTTPException(status_code=404, detail="Lift not found")
 
-    return {"lift": lift.as_dict(), "syncedAt": await synced_at(session)}
+    today = today_in_amsterdam()
+    rows, measuring_since, measured_days = await fetch_history(session, lift.id, today)
+
+    return {
+        "lift": lift.as_dict(),
+        # Always an object, with honest nulls before there is any history — one
+        # code path on the frontend rather than two.
+        "history": summarize(rows, measuring_since, measured_days, lift.open, today),
+        "syncedAt": await synced_at(session),
+    }
 
 
 def authorize_cron(authorization: str | None) -> None:
@@ -165,6 +187,9 @@ def authorize_cron(authorization: str | None) -> None:
     variable set. With no secret configured there is nothing to compare against
     and the endpoint stays open — set CRON_SECRET so the sync (which hits the NS
     API and writes to the database) cannot be triggered by anyone.
+
+    Worth more now than it was: an open endpoint can overwrite today's recorded
+    history for every lift, not just trigger a sync.
     """
     secret = os.environ.get("CRON_SECRET")
     if secret and not secrets.compare_digest(
@@ -173,6 +198,13 @@ def authorize_cron(authorization: str | None) -> None:
         raise HTTPException(status_code=401, detail="Unauthorized")
 
 
+# Runs once a day, and is the only writer of the daily history: the
+# request-triggered sync deliberately records nothing, so a busy day and a quiet
+# day produce the same one row per lift.
+#
+# SessionDep rather than FreshSessionDep: the sync is part of what this route
+# reports, and the order of the two steps is the point, so neither belongs in a
+# dependency that hides them.
 @app.get("/svc/api/cron")
 async def cron(
     session: SessionDep,
@@ -180,4 +212,28 @@ async def cron(
 ):
     authorize_cron(authorization)
 
-    return {"ok": True, "lifts": await sync_lifts(session)}
+    # One day for the whole invocation, so the recording and the summary cannot
+    # straddle midnight in Amsterdam.
+    observed_on = today_in_amsterdam()
+
+    # sync_if_stale, not sync_lifts: by the time this fires the read routes have
+    # very likely already refreshed within ns.MAX_AGE, and an unconditional sync
+    # would spend three NS requests and a full rewrite of the lifts table to
+    # learn nothing. It also takes the advisory lock and swallows a failed fetch,
+    # so the cron cannot collide with a request-triggered sync or fail the whole
+    # run over an NS blip — record_day's own staleness guard is what stops a
+    # failed sync from being recorded as fact. A null result here is the normal
+    # case, not an error.
+    sync = await sync_if_stale(session)
+    recorded = await record_day(session, observed_on)
+
+    # Still 200 on a skipped sync or a skipped recording: the `note` carries the
+    # reason, and a non-2xx would make Vercel retry something that will skip
+    # again for the same reason.
+    return {
+        "ok": True,
+        "sync": sync,
+        "syncedAt": await synced_at(session),
+        "recorded": recorded,
+        "stats": await day_summary(session, observed_on),
+    }

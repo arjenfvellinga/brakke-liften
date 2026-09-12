@@ -1,9 +1,9 @@
 """SQLAlchemy models. `Base.metadata` is what alembic autogenerates against."""
 
-from datetime import date, datetime
+from datetime import datetime
 from enum import StrEnum
 
-from sqlalchemy import CheckConstraint, Date, DateTime, Enum, String, func
+from sqlalchemy import CheckConstraint, DateTime, Enum, String, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -117,70 +117,3 @@ class Lift(Base):
             "platform": self.platform,
             "createdAt": self.created_at.isoformat(),
         }
-
-
-class LiftDay(Base):
-    """One lift's state on one calendar day, as recorded by the daily cron.
-
-    Dense on purpose: a row is written for every lift on every day the cron
-    manages to record, so the *absence* of a row means "nobody looked", which is
-    a different answer from "the lift was fine". That distinction cannot be
-    recovered afterwards — `ns.sync_lifts` deletes rows for lifts that vanish
-    from the NS feed and re-inserts them if they come back, so a table holding
-    only the days something was wrong would read a lift's six-week absence as
-    six weeks of perfect uptime. At ~1000 lifts that costs ~60 MB a year, which
-    buys the one property every figure on the lift page rests on.
-
-    Written by the cron and nothing else. `ns.sync_lifts` deliberately does not
-    touch this table: it runs on demand, many times a day on a busy day and once
-    on a quiet one, and a history whose resolution depends on traffic is not a
-    history. One row per lift per day, whoever happened to be looking.
-    """
-
-    __tablename__ = "lift_day"
-
-    # Matches Lift.id in type and length, but deliberately *not* by foreign key.
-    # sync_lifts deletes lifts that disappear upstream: an FK would either block
-    # that delete — killing every sync, and every request that triggers one — or,
-    # with ON DELETE CASCADE, silently destroy the whole history of a lift that
-    # blinked out of the feed for a single day. The history is an independent
-    # append-only log keyed by the upstream id, and it outlives the lift.
-    lift_id: Mapped[str] = mapped_column(String(255), primary_key=True)
-    # The Europe/Amsterdam calendar day, not UTC and not the database's
-    # current_date: "buiten dienst sinds 4 september" has to mean the day a Dutch
-    # reader would name, wherever this runs. Second half of the primary key, so
-    # "this lift, the last 90 days" is one index range scan and the daily write
-    # is an idempotent upsert on the pair.
-    #
-    # Indexed on its own as well, for the other direction — "every lift, one
-    # day", which the cron's aggregate runs. The primary key cannot serve that
-    # one, since observed_on is its second column.
-    observed_on: Mapped[date] = mapped_column(Date, primary_key=True, index=True)
-    # Configured exactly like Lift.open, for the same reason: the API's own
-    # casing in a VARCHAR with a CHECK rather than a Postgres ENUM, so a new
-    # upstream value stays an ordinary migration. Sharing the `lift_open` name
-    # with the lifts table is fine — a CHECK constraint name only has to be
-    # unique within its table.
-    open: Mapped[LiftOpen] = mapped_column(
-        Enum(
-            LiftOpen,
-            name="lift_open",
-            native_enum=False,
-            length=7,
-            create_constraint=True,
-            values_callable=lambda enum: [member.value for member in enum],
-        )
-    )
-    # Only stored when `open` is not Yes. The available label is the same string
-    # for every working lift on every day, and at a thousand rows a day that one
-    # column would be a quarter of the table; the labels that ever get read back
-    # are the ones describing an outage. Null therefore means "the ordinary
-    # available label", not "unknown".
-    status_label: Mapped[str | None] = mapped_column(String(64))
-    # When the row was last written, which is not the day it describes: a retried
-    # or hand-triggered cron overwrites the day, and this is the only way to see
-    # that afterwards. Server-side default so a row inserted by hand still
-    # carries one.
-    recorded_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )

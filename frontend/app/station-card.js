@@ -7,10 +7,7 @@ const STATUS = {
   Unknown: { label: "Onbekend", className: "unknown" },
 };
 
-// Exported: it is the single mapping from the upstream `open` value onto this
-// app's vocabulary, and the statistics need the same words. A second copy over
-// there is how the two would drift apart.
-export function statusOf(open) {
+function statusOf(open) {
   return STATUS[open] || { label: open, className: "unknown" };
 }
 
@@ -203,11 +200,7 @@ export function LiftTable({ station }) {
 // Status is still carried more than one way: the bar, the word, and the weight.
 // The row tint is dropped rather than blown up to a whole band, which would put
 // every muted label on this page over a second surface to be checked.
-//
-// `note` is how long this lift has been out right now. Rendered as a second
-// <dd> under the same <dt>: a term may have more than one value, and "Buiten
-// dienst" and "sinds 18 oktober" are two answers to "Status", not one long one.
-export function LiftDetail({ lift, note = null }) {
+export function LiftDetail({ lift }) {
   const status = statusOf(lift.open);
 
   return (
@@ -218,7 +211,6 @@ export function LiftDetail({ lift, note = null }) {
           <span className="mark" aria-hidden="true" />
           {lift.statusLabel || status.label}
         </dd>
-        {note && <dd className="detail-note">{note}</dd>}
       </div>
 
       <div className="detail">

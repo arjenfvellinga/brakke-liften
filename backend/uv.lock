@@ -291,7 +291,6 @@ dependencies = [
     { name = "httpx" },
     { name = "psycopg", extra = ["binary"] },
     { name = "sqlalchemy", extra = ["asyncio"] },
-    { name = "tzdata" },
     { name = "uvicorn" },
 ]
 
@@ -307,7 +306,6 @@ requires-dist = [
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.3.4" },
     { name = "sqlalchemy", extras = ["asyncio"], specifier = ">=2.0.52" },
-    { name = "tzdata", specifier = ">=2025.2" },
     { name = "uvicorn", specifier = ">=0.38.0" },
 ]
 

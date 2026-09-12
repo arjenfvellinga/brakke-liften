@@ -26,6 +26,6 @@
   ],
   "crons": [{
     "path": "/svc/api/cron",
-    "schedule": "0 23 * * *"
+    "schedule": "0 17 * * *"
   }]
 }

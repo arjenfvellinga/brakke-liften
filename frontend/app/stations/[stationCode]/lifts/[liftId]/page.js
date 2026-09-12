@@ -5,11 +5,6 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { BACKEND } from "../../../../backend";
-import {
-  currentOutageNote,
-  LiftStats,
-  statsSummary,
-} from "../../../../lift-stats";
 import { SiteHeader } from "../../../../site-header";
 import { LiftDetail, liftIdFromParam, liftName } from "../../../../station-card";
 
@@ -21,7 +16,6 @@ export default function LiftPage() {
   const { stationCode, liftId: liftIdParam } = useParams();
   const liftId = liftIdFromParam(liftIdParam);
   const [lift, setLift] = useState(null);
-  const [history, setHistory] = useState(null);
   const [syncedAt, setSyncedAt] = useState(null);
   const [error, setError] = useState(null);
 
@@ -40,9 +34,6 @@ export default function LiftPage() {
         const data = await res.json();
         if (!cancelled) {
           setLift(data.lift);
-          // Absent on a backend from before the history existed; the section
-          // handles that, but only if it is told which.
-          setHistory(data.history || null);
           setSyncedAt(data.syncedAt);
         }
       } catch (err) {
@@ -98,15 +89,6 @@ export default function LiftPage() {
           </div>
         </div>
 
-        {/* Mounted unconditionally, like the overview's result count: a live
-            region that arrives together with its first message is not announced
-            by most screen readers. This one carries the one sentence the whole
-            page adds up to, so the status and the availability turn up on their
-            own once the fetch resolves (SC 4.1.3). */}
-        <p className="sr-only" role="status">
-          {lift ? statsSummary(lift, history) : ""}
-        </p>
-
         {error && (
           <p className="notice error" role="alert">
             {error}
@@ -118,12 +100,7 @@ export default function LiftPage() {
           </p>
         )}
 
-        {lift && (
-          <>
-            <LiftDetail lift={lift} note={currentOutageNote(lift, history)} />
-            <LiftStats lift={lift} history={history} />
-          </>
-        )}
+        {lift && <LiftDetail lift={lift} />}
       </main>
     </>
   );
